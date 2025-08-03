@@ -1,10 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import PlayerSetup from "./PlayerSetup"; // Justera sökvägen efter din struktur
+import PlayerSetup from "./PlayerSetup"; // Justera sökvägen efter din mappstruktur
 
-export default function HeroSection() {
+export default function HeroSection({ onStart }) {
   const [showPlayerSetup, setShowPlayerSetup] = useState(false);
+
+  const handleStart = (players) => {
+    onStart(players);
+  };
 
   return (
     <section
@@ -30,7 +34,7 @@ export default function HeroSection() {
             </button>
           </>
         ) : (
-          <PlayerSetup />
+          <PlayerSetup onStart={handleStart} />
         )}
       </div>
     </section>

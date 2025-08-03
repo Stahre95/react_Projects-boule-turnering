@@ -1,53 +1,57 @@
 "use client";
 import { useState } from "react";
 
-export default function PlayerSetup() {
+export default function PlayerSetup({ onStart }) {
   const [playerCount, setPlayerCount] = useState(16);
   const [playerNames, setPlayerNames] = useState(Array(16).fill(""));
-  const [errorMessage, setErrorMessage] = useState(""); // 🆕 felmeddelande
+  const [error, setError] = useState("");
 
   const handlePlayerCountChange = (e) => {
     const count = Number(e.target.value);
     setPlayerCount(count);
+
     setPlayerNames((prevNames) => {
-      const newNames = [...prevNames];
       if (count > prevNames.length) {
-        return newNames.concat(Array(count - prevNames.length).fill(""));
+        return [...prevNames, ...Array(count - prevNames.length).fill("")];
       } else {
-        return newNames.slice(0, count);
+        return prevNames.slice(0, count);
       }
     });
-    setErrorMessage(""); // Rensa ev. tidigare fel
   };
 
   const handleNameChange = (index, e) => {
     const newNames = [...playerNames];
     newNames[index] = e.target.value;
     setPlayerNames(newNames);
-    setErrorMessage(""); // Rensa ev. tidigare fel
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setError("");
 
-    const trimmedNames = playerNames.map((name) => name.trim());
-    const nameSet = new Set(trimmedNames.filter((n) => n));
-    if (nameSet.size < trimmedNames.filter((n) => n).length) {
-      setErrorMessage("Två eller flera spelare har samma namn. Namnen måste vara unika.");
+    const trimmedNames = playerNames.map((n) => n.trim());
+    const filledNames = trimmedNames.filter((n) => n !== "");
+
+    if (filledNames.length < 2) {
+      setError("Fyll i minst två spelarnamn.");
       return;
     }
 
-    setErrorMessage(""); // Allt ok
-    // Fortsätt med turneringslogik
-    console.log("Startar turnering med spelare:", trimmedNames);
+    const nameSet = new Set(filledNames);
+    if (nameSet.size !== filledNames.length) {
+      setError("Spelarnamn får inte vara exakt lika.");
+      return;
+    }
+
+    onStart(filledNames);
   };
 
   return (
     <form
       onSubmit={handleSubmit}
-      className="w-full max-w-3xl mx-auto p-6 bg-white bg-opacity-90 rounded shadow-md"
+      className="w-full max-w-3xl mx-auto p-6 bg-white bg-opacity-90 rounded shadow-md text-black"
     >
-      <label className="block mb-2 font-semibold text-gray-900" htmlFor="playerCount">
+      <label className="block mb-2 font-semibold" htmlFor="playerCount">
         Antal spelare: <span className="font-bold">{playerCount}</span>
       </label>
       <input
@@ -60,11 +64,11 @@ export default function PlayerSetup() {
         className="w-full mb-6 accent-indigo-600"
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto">
         {playerNames.map((name, idx) => (
           <div key={idx}>
             <label
-              className="block mb-1 text-gray-900 font-medium"
+              className="block mb-1 font-medium"
               htmlFor={`playerName${idx}`}
             >
               Spelare {idx + 1}
@@ -75,18 +79,15 @@ export default function PlayerSetup() {
               value={name}
               onChange={(e) => handleNameChange(idx, e)}
               placeholder={`Namn på spelare ${idx + 1}`}
-              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-400 text-black"
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-400"
               required
             />
           </div>
         ))}
       </div>
 
-      {/* 🔴 Felmeddelande */}
-      {errorMessage && (
-        <div className="mt-4 p-3 bg-red-100 text-red-700 rounded border border-red-300">
-          {errorMessage}
-        </div>
+      {error && (
+        <p className="text-red-600 font-semibold text-center mt-4">{error}</p>
       )}
 
       <button
