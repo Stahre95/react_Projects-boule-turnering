@@ -32,14 +32,10 @@ export default function PlayerSetup({ onStart }) {
     const trimmedNames = playerNames.map((n) => n.trim());
     const filledNames = trimmedNames.filter((n) => n !== "");
 
-    if (filledNames.length < 2) {
-      setError("Fyll i minst två spelarnamn.");
-      return;
-    }
 
     const nameSet = new Set(filledNames);
     if (nameSet.size !== filledNames.length) {
-      setError("Spelarnamn får inte vara exakt lika.");
+      setError("Två eller flera spelare har samma namn. Namnen måste vara unika.");
       return;
     }
 
@@ -61,10 +57,10 @@ export default function PlayerSetup({ onStart }) {
         max="30"
         value={playerCount}
         onChange={handlePlayerCountChange}
-        className="w-full mb-6 accent-indigo-600"
+        className="w-full mb-6 accent-emerald-600"
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[800px] overflow-y-auto">
         {playerNames.map((name, idx) => (
           <div key={idx}>
             <label
@@ -87,12 +83,12 @@ export default function PlayerSetup({ onStart }) {
       </div>
 
       {error && (
-        <p className="text-red-600 font-semibold text-center mt-4">{error}</p>
+        <p className="mt-4 p-3 bg-red-100 text-red-700 rounded border border-red-300">{error}</p>
       )}
 
       <button
         type="submit"
-        className="mt-6 w-full bg-indigo-600 text-white py-3 rounded hover:bg-indigo-700 transition"
+        className="mt-6 w-full bg-green-600 text-white py-3 rounded hover:bg-green-800 transition"
       >
         Starta turnering
       </button>

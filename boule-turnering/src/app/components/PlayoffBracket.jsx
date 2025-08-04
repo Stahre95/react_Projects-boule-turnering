@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from "react";
 
 export default function PlayoffBracket({ playoffData, onSaveResults, playoffSize, players }) {
-  // Initiala matcher:
-  // Om det finns sparad data (playoffData) så använd den,
-  // annars generera baserat på antal lag och seed från players
-
   const generateInitialMatches = () => {
     if (playoffData) {
       return playoffData.quarterfinals || [];
@@ -41,29 +37,15 @@ export default function PlayoffBracket({ playoffData, onSaveResults, playoffSize
   };
 
   const [quarterfinals, setQuarterfinals] = useState(generateInitialMatches);
+  const [semifinals, setSemifinals] = useState(() =>
+    playoffData?.semifinals || (playoffSize === 8 ? createEmptyMatches(2, "semi") : [])
+  );
+  const [finals, setFinals] = useState(() =>
+    playoffData?.finals || createEmptyMatches(1, "final")
+  );
 
-  const generateInitialSemis = () => {
-    if (playoffData && playoffData.semifinals) return playoffData.semifinals;
-    if (playoffSize === 8) {
-      return createEmptyMatches(2, "semi");
-    }
-    if (playoffSize === 4) {
-      // Vid 4 lag är kvartfinalerna egentligen semifinaler, så vi kan använda quarterfinals som semis direkt
-      return [];
-    }
-    return [];
-  };
+  const [statusMessage, setStatusMessage] = useState(null);
 
-  const [semifinals, setSemifinals] = useState(generateInitialSemis);
-
-  const generateInitialFinals = () => {
-    if (playoffData && playoffData.finals) return playoffData.finals;
-    return createEmptyMatches(1, "final");
-  };
-
-  const [finals, setFinals] = useState(generateInitialFinals);
-
-  // Hjälpfunktion för att skapa tomma matcher med platshållare
   function createEmptyMatches(count, prefix) {
     return Array.from({ length: count }, (_, i) => ({
       id: `${prefix}${i + 1}`,
@@ -80,15 +62,13 @@ export default function PlayoffBracket({ playoffData, onSaveResults, playoffSize
     }));
   }
 
-  // Funktion för att bestämma vinnare från en match
   function getWinner(match) {
     if (match.score1 === null || match.score2 === null) return null;
     if (match.score1 > match.score2) return match.player1;
     if (match.score2 > match.score1) return match.player2;
-    return null; // Oavgjort = ingen vinnare
+    return null;
   }
 
-  // Uppdatera matchresultat
   function updateMatch(roundSetter, matchId, playerNum, value) {
     roundSetter((prev) =>
       prev.map((match) =>
@@ -102,7 +82,6 @@ export default function PlayoffBracket({ playoffData, onSaveResults, playoffSize
     );
   }
 
-  // När quarterfinals ändras, uppdatera semifinalerna (bara vid 8 lag)
   useEffect(() => {
     if (playoffSize === 8) {
       const winners = quarterfinals.map(getWinner);
@@ -114,16 +93,14 @@ export default function PlayoffBracket({ playoffData, onSaveResults, playoffSize
         }))
       );
     } else if (playoffSize === 4) {
-      // Vid 4 lag är quarterfinals = semifinaler, sätt dem som semifinaler direkt
       setSemifinals(quarterfinals);
     }
   }, [quarterfinals, playoffSize]);
 
-  // När semifinaler ändras, uppdatera finalen
   useEffect(() => {
     const winners = semifinals.map(getWinner);
     setFinals((prev) =>
-      prev.map((match, i) => ({
+      prev.map((match) => ({
         ...match,
         player1: winners[0] || match.player1,
         player2: winners[1] || match.player2,
@@ -131,16 +108,24 @@ export default function PlayoffBracket({ playoffData, onSaveResults, playoffSize
     );
   }, [semifinals]);
 
-  // Spara resultat till parent-komponenten
   function handleSave() {
     onSaveResults({
       quarterfinals,
       semifinals,
       finals,
     });
+
+    const finalMatch = finals[0];
+    const winner = getWinner(finalMatch);
+
+    if (!finalMatch || finalMatch.score1 === null || finalMatch.score2 === null || !winner) {
+      setStatusMessage("❌ Alla matcher är inte färdigspelade.");
+      setTimeout(() => setStatusMessage(null), 5000);
+    } else {
+      setStatusMessage(`🏆 ${winner} är vinnaren!`);
+    }
   }
 
-  // Rendera match med inputfält
   const renderMatch = (match, roundSetter) => (
     <div
       key={match.id}
@@ -199,6 +184,10 @@ export default function PlayoffBracket({ playoffData, onSaveResults, playoffSize
       >
         Spara slutspelsresultat
       </button>
+
+      {statusMessage && (
+        <div className="mt-4 text-center text-lg font-medium">{statusMessage}</div>
+      )}
     </div>
   );
 }

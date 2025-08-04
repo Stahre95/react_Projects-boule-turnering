@@ -97,11 +97,11 @@ export default function TournamentOverview({ players }) {
           <h1 className="text-3xl font-bold mb-8 text-center">Turneringsöversikt</h1>
 
           <p className="mb-4 text-center">Spelare som är anmälda:</p>
-          <ul className="mb-8 flex flex-wrap justify-center gap-4">
+          <ul className="mb-8 grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10 gap-4 justify-items-center">
             {players.map((name, index) => (
               <li
                 key={index}
-                className="bg-white text-black px-4 py-2 rounded shadow"
+                className="bg-white text-black px-4 py-2 rounded shadow w-full text-center"
               >
                 {name}
               </li>
@@ -154,7 +154,7 @@ export default function TournamentOverview({ players }) {
             </div>
 
             {/* Live tabell */}
-            <div className="bg-white bg-opacity-90 text-black p-4 rounded flex flex-col justify-between">
+            <div className="bg-white bg-opacity-90 text-black p-4 rounded overflow-auto">
               <ScoreTable players={players} rounds={rounds} />
             </div>
           </div>

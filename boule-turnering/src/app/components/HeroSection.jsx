@@ -30,7 +30,7 @@ export default function HeroSection({ onStart }) {
               onClick={() => setShowPlayerSetup(true)}
               className="mt-8 bg-white text-black px-6 py-3 rounded-full hover:bg-gray-200 transition"
             >
-              Starta ny turnering
+              Skapa ny turnering
             </button>
           </>
         ) : (
