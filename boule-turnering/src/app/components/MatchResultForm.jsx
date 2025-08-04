@@ -25,7 +25,7 @@ const MatchResultForm = ({ rounds, onSave }) => {
           <h3 className="text-xl font-bold mb-3 capitalize">{roundName}</h3>
           <div className="space-y-3">
             {matches.map((match, index) => (
-              <div key={index} className="flex items-center gap-4">
+              <div key={index} className="flex items-center gap-4 justify-center">
                 <span className="w-32">{match.player1}</span>
                 <input
                   type="number"
