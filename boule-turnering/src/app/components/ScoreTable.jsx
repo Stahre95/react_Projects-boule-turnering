@@ -37,7 +37,7 @@ export default function ScoreTable({ players, rounds }) {
     return Math.random() < 0.5 ? -1 : 1;
   });
 
-  const lineAfter = players.length <= 16 ? 8 : 4;
+  const lineAfter = players.length <= 15 ? 4 : 8;
 
   return (
     <div className="bg-white bg-opacity-90 text-black p-4 rounded">

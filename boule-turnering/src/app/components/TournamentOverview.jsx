@@ -110,7 +110,7 @@ export default function TournamentOverview({ players }) {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             {/* Omgång 1 */}
-            <div className="bg-white bg-opacity-90 text-black p-4 rounded overflow-auto max-h-[400px]">
+            <div className="bg-white bg-opacity-90 text-black p-4 rounded overflow-auto ">
               <h2 className="text-xl font-semibold mb-2">Omgång 1</h2>
               {rounds.round1.map((match, i) => (
                 <div
@@ -132,7 +132,7 @@ export default function TournamentOverview({ players }) {
             </div>
 
             {/* Omgång 2 */}
-            <div className="bg-white bg-opacity-90 text-black p-4 rounded overflow-auto max-h-[400px]">
+            <div className="bg-white bg-opacity-90 text-black p-4 rounded overflow-auto">
               <h2 className="text-xl font-semibold mb-2">Omgång 2</h2>
               {rounds.round2.map((match, i) => (
                 <div
