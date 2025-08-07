@@ -1,49 +1,9 @@
 import React, { useState, useEffect } from "react";
 
 export default function PlayoffBracket({ playoffData, onSaveResults, playoffSize, players }) {
-  const generateInitialMatches = () => {
-    if (playoffData) {
-      return playoffData.quarterfinals || [];
-    }
-    if (playoffSize === 8) {
-      const matchups = [
-        [0, 7],
-        [1, 6],
-        [2, 5],
-        [3, 4],
-      ];
-      return matchups.map((pair, i) => ({
-        id: `qf${i + 1}`,
-        player1: players[pair[0]],
-        player2: players[pair[1]],
-        score1: null,
-        score2: null,
-      }));
-    }
-    if (playoffSize === 4) {
-      const matchups = [
-        [0, 3],
-        [1, 2],
-      ];
-      return matchups.map((pair, i) => ({
-        id: `sf${i + 1}`,
-        player1: players[pair[0]],
-        player2: players[pair[1]],
-        score1: null,
-        score2: null,
-      }));
-    }
-    return [];
-  };
-
-  const [quarterfinals, setQuarterfinals] = useState(generateInitialMatches);
-  const [semifinals, setSemifinals] = useState(() =>
-    playoffData?.semifinals || (playoffSize === 8 ? createEmptyMatches(2, "semi") : [])
-  );
-  const [finals, setFinals] = useState(() =>
-    playoffData?.finals || createEmptyMatches(1, "final")
-  );
-
+  const [quarterfinals, setQuarterfinals] = useState([]);
+  const [semifinals, setSemifinals] = useState([]);
+  const [finals, setFinals] = useState([]);
   const [statusMessage, setStatusMessage] = useState(null);
 
   function createEmptyMatches(count, prefix) {
@@ -83,6 +43,48 @@ export default function PlayoffBracket({ playoffData, onSaveResults, playoffSize
   }
 
   useEffect(() => {
+    if (!playoffData) {
+      if (playoffSize === 8) {
+        const matchups = [
+          [0, 7],
+          [1, 6],
+          [2, 5],
+          [3, 4],
+        ];
+        setQuarterfinals(
+          matchups.map((pair, i) => ({
+            id: `qf${i + 1}`,
+            player1: players[pair[0]],
+            player2: players[pair[1]],
+            score1: null,
+            score2: null,
+          }))
+        );
+        setSemifinals(createEmptyMatches(2, "semi"));
+      } else if (playoffSize === 4) {
+        const matchups = [
+          [0, 3],
+          [1, 2],
+        ];
+        setSemifinals(
+          matchups.map((pair, i) => ({
+            id: `sf${i + 1}`,
+            player1: players[pair[0]],
+            player2: players[pair[1]],
+            score1: null,
+            score2: null,
+          }))
+        );
+      }
+      setFinals(createEmptyMatches(1, "final"));
+    } else {
+      setQuarterfinals(playoffData.quarterfinals || []);
+      setSemifinals(playoffData.semifinals || []);
+      setFinals(playoffData.finals || []);
+    }
+  }, [players, playoffData, playoffSize]);
+
+  useEffect(() => {
     if (playoffSize === 8) {
       const winners = quarterfinals.map(getWinner);
       setSemifinals((prev) =>
@@ -92,8 +94,6 @@ export default function PlayoffBracket({ playoffData, onSaveResults, playoffSize
           player2: winners[i * 2 + 1] || match.player2,
         }))
       );
-    } else if (playoffSize === 4) {
-      setSemifinals(quarterfinals);
     }
   }, [quarterfinals, playoffSize]);
 
@@ -157,21 +157,17 @@ export default function PlayoffBracket({ playoffData, onSaveResults, playoffSize
         Slutspel (Top {playoffSize})
       </h2>
 
-      <div className="mb-6">
-        <h3 className="text-xl font-semibold mb-2">
-          {playoffSize === 8 ? "Kvartsfinaler" : "Semifinaler"}
-        </h3>
-        {(playoffSize === 8 ? quarterfinals : semifinals).map((match) =>
-          renderMatch(match, playoffSize === 8 ? setQuarterfinals : setSemifinals)
-        )}
-      </div>
-
       {playoffSize === 8 && (
         <div className="mb-6">
-          <h3 className="text-xl font-semibold mb-2">Semifinaler</h3>
-          {semifinals.map((match) => renderMatch(match, setSemifinals))}
+          <h3 className="text-xl font-semibold mb-2">Kvartsfinaler</h3>
+          {quarterfinals.map((match) => renderMatch(match, setQuarterfinals))}
         </div>
       )}
+
+      <div className="mb-6">
+        <h3 className="text-xl font-semibold mb-2">Semifinaler</h3>
+        {semifinals.map((match) => renderMatch(match, setSemifinals))}
+      </div>
 
       <div className="mb-6">
         <h3 className="text-xl font-semibold mb-2">Final</h3>

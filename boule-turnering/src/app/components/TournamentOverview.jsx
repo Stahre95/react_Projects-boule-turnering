@@ -10,6 +10,8 @@ export default function TournamentOverview({ players }) {
   const [showPlayoff, setShowPlayoff] = useState(false);
   const [playoffData, setPlayoffData] = useState(null);
   const [playoffSize, setPlayoffSize] = useState(0);
+  const [standings, setStandings] = useState([]);
+
 
   useEffect(() => {
     const generated = generateMatchRounds(players);
@@ -73,7 +75,8 @@ export default function TournamentOverview({ players }) {
 
     // Välj top 4 eller 8
     const cutoff = players.length < 16 ? 4 : 8;
-    const topPlayers = playerStats.slice(0, cutoff).map((p) => p.player);
+    const topPlayers = standings.slice(0, players.length <= 15 ? 4 : 8);
+
 
     setPlayoffSize(cutoff);
     setPlayoffData(null); // nollställ tidigare data, starta nytt
@@ -155,7 +158,8 @@ export default function TournamentOverview({ players }) {
 
             {/* Live tabell */}
             <div className="bg-white bg-opacity-90 text-black p-4 rounded overflow-auto">
-              <ScoreTable players={players} rounds={rounds} />
+              <ScoreTable players={players} rounds={rounds} onStandingsUpdate={setStandings} />
+
             </div>
           </div>
 
@@ -192,12 +196,12 @@ export default function TournamentOverview({ players }) {
           {/* Visa slutspel när showPlayoff är true */}
           {showPlayoff && (
             <div className="mt-10">
-              <PlayoffBracket
-                playoffData={playoffData}
-                onSaveResults={handleSavePlayoffResults}
-                playoffSize={playoffSize}
-                players={players}
-              />
+             <PlayoffBracket
+  playoffData={playoffData}
+  onSaveResults={handleSavePlayoffResults}
+  playoffSize={players.length <= 15 ? 4 : 8}
+  players={standings}
+/>
             </div>
           )}
         </div>
