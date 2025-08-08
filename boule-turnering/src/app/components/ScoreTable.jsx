@@ -44,29 +44,30 @@ export default function ScoreTable({ players, rounds, onStandingsUpdate }) {
   const lineAfter = players.length <= 15 ? 4 : 8;
 
   return (
-    <div className="bg-white bg-opacity-90 text-black p-4 rounded">
-      <h2 className="text-xl font-semibold mb-2">Live tabell</h2>
+    <div className="bg-white bg-opacity-90 text-black p-4 rounded shadow-md max-w-full">
+      <h2 className="text-xl font-semibold mb-4 text-center sm:text-left">Live tabell</h2>
       {sortedStats.length === 0 ? (
-        <p>Poängställning kommer visas här</p>
+        <p className="text-center text-gray-600">Poängställning kommer visas här</p>
       ) : (
-        <table className="w-full text-left border-collapse">
+        <table className="min-w-[320px] w-full text-center border-collapse">
           <thead>
             <tr>
-              <th className="border-b px-2 py-1">#</th>
-              <th className="border-b px-2 py-1">Spelare</th>
-              <th className="border-b px-2 py-1">Poäng</th>
-              <th className="border-b px-2 py-1">Målskillnad</th>
+              <th className="border-b px-3 py-2">#</th>
+              <th className="border-b px-3 py-2">Spelare</th>
+              <th className="border-b px-3 py-2">Poäng</th>
+              <th className="border-b px-3 py-2">Målskillnad</th>
             </tr>
           </thead>
           <tbody>
             {sortedStats.map(({ player, points, goalDifference }, index) => {
-              const borderClass = (index + 1) === lineAfter ? "border-b-4 border-yellow-500" : "border-b";
+              const borderClass =
+                index + 1 === lineAfter ? "border-b-4 border-yellow-500" : "border-b";
               return (
                 <tr key={player} className={borderClass}>
-                  <td className="px-2 py-1 font-semibold">{index + 1}.</td>
-                  <td className="px-2 py-1">{player}</td>
-                  <td className="px-2 py-1">{points}</td>
-                  <td className="px-2 py-1">{goalDifference}</td>
+                  <td className="px-3 py-2 font-semibold">{index + 1}.</td>
+                  <td className="px-3 py-2 truncate max-w-xs">{player}</td>
+                  <td className="px-3 py-2 text-center">{points}</td>
+                  <td className="px-3 py-2 text-center">{goalDifference}</td>
                 </tr>
               );
             })}

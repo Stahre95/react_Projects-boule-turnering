@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import PlayerSetup from "./PlayerSetup"; // Justera sökvägen efter din mappstruktur
+import PlayerSetup from "./PlayerSetup"; // Justera sökvägen
 
 export default function HeroSection({ onStart }) {
   const [showPlayerSetup, setShowPlayerSetup] = useState(false);
@@ -12,23 +12,27 @@ export default function HeroSection({ onStart }) {
 
   return (
     <section
-      className="relative h-screen bg-cover bg-center flex flex-col items-center justify-center text-white px-4"
+      className="relative min-h-screen bg-cover bg-center flex flex-col items-center justify-center text-white px-4 sm:px-6"
       style={{
         backgroundImage: "url('/images/hero_background.jpg')",
       }}
     >
-      <div className="absolute inset-0 bg-black opacity-60"></div>
+      {/* Mörk overlay */}
+      <div className="absolute inset-0 bg-black/60"></div>
 
-      <div className="relative z-10 text-center w-full">
+      {/* Innehåll */}
+      <div className="relative z-10 text-center w-full max-w-3xl">
         {!showPlayerSetup ? (
           <>
-            <h1 className="text-4xl md:text-6xl font-bold whitespace-nowrap">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold leading-tight">
               First Camp Västerås – Mälaren
             </h1>
-            <h2 className="text-xl md:text-2xl mt-4">Boule Turnering</h2>
+            <h2 className="text-lg sm:text-xl md:text-2xl mt-3 sm:mt-4">
+              Boule Turnering
+            </h2>
             <button
               onClick={() => setShowPlayerSetup(true)}
-              className="mt-8 bg-white text-black px-6 py-3 rounded-full hover:bg-gray-200 transition"
+              className="mt-8 w-full sm:w-auto bg-white text-black px-8 py-4 rounded-full text-lg font-medium hover:bg-gray-200 transition shadow-lg"
             >
               Skapa ny turnering
             </button>
