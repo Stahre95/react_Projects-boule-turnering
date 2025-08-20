@@ -1,8 +1,14 @@
 "use client";
 import React, { useState } from "react";
 
-const MatchResultForm = ({ rounds, onSave }) => {
+const MatchResultForm = ({ rounds, players, onSave }) => {
   const [updatedRounds, setUpdatedRounds] = useState(rounds);
+
+  // Helper för att få fram spelarnamn från id
+  const getPlayerName = (id) => {
+    const player = players.find((p) => p.id === id);
+    return player ? player.name : "Okänd spelare";
+  };
 
   const handleInputChange = (roundName, matchIndex, field, value) => {
     const newRounds = { ...updatedRounds };
@@ -12,6 +18,7 @@ const MatchResultForm = ({ rounds, onSave }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    // Här skickar vi tillbaka rounds med ID:n kvar + nya scores
     onSave(updatedRounds);
   };
 
@@ -26,10 +33,13 @@ const MatchResultForm = ({ rounds, onSave }) => {
           <div className="space-y-4">
             {matches.map((match, index) => (
               <div
-                key={index}
+                key={match.id}
                 className="grid grid-cols-[1fr_40px_40px_40px_1fr] items-center gap-2"
               >
-                <span className="truncate text-right pr-2">{match.player1}</span>
+                {/* Spelarnamn via id */}
+                <span className="truncate text-right pr-2">
+                  {getPlayerName(match.player1_id)}
+                </span>
 
                 <input
                   type="number"
@@ -53,7 +63,9 @@ const MatchResultForm = ({ rounds, onSave }) => {
                   min="0"
                 />
 
-                <span className="truncate pl-2">{match.player2}</span>
+                <span className="truncate pl-2">
+                  {getPlayerName(match.player2_id)}
+                </span>
               </div>
             ))}
           </div>

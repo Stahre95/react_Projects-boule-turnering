@@ -6,17 +6,22 @@ export default function PlayoffBracket({ playoffData, onSaveResults, playoffSize
   const [finals, setFinals] = useState([]);
   const [statusMessage, setStatusMessage] = useState(null);
 
+  const getPlayerName = (id) => {
+    const player = players.find((p) => p.id === id);
+    return player ? player.name : "Okänd";
+  };
+
   function createEmptyMatches(count, prefix) {
     return Array.from({ length: count }, (_, i) => ({
       id: `${prefix}${i + 1}`,
-      player1:
+      player1_id:
         prefix === "semi"
-          ? `Vinnare ${playoffSize === 8 ? `kvartsfinal ${i * 2 + 1}` : `semifinal ${i + 1}`}`
-          : `Vinnare semifinal 1`,
-      player2:
+          ? null
+          : null,
+      player2_id:
         prefix === "semi"
-          ? `Vinnare ${playoffSize === 8 ? `kvartsfinal ${i * 2 + 2}` : `semifinal ${i + 2}`}`
-          : `Vinnare semifinal 2`,
+          ? null
+          : null,
       score1: null,
       score2: null,
     }));
@@ -24,8 +29,8 @@ export default function PlayoffBracket({ playoffData, onSaveResults, playoffSize
 
   function getWinner(match) {
     if (match.score1 === null || match.score2 === null) return null;
-    if (match.score1 > match.score2) return match.player1;
-    if (match.score2 > match.score1) return match.player2;
+    if (match.score1 > match.score2) return match.player1_id;
+    if (match.score2 > match.score1) return match.player2_id;
     return null;
   }
 
@@ -54,8 +59,8 @@ export default function PlayoffBracket({ playoffData, onSaveResults, playoffSize
         setQuarterfinals(
           matchups.map((pair, i) => ({
             id: `qf${i + 1}`,
-            player1: players[pair[0]],
-            player2: players[pair[1]],
+            player1_id: players[pair[0]]?.id,
+            player2_id: players[pair[1]]?.id,
             score1: null,
             score2: null,
           }))
@@ -69,8 +74,8 @@ export default function PlayoffBracket({ playoffData, onSaveResults, playoffSize
         setSemifinals(
           matchups.map((pair, i) => ({
             id: `sf${i + 1}`,
-            player1: players[pair[0]],
-            player2: players[pair[1]],
+            player1_id: players[pair[0]]?.id,
+            player2_id: players[pair[1]]?.id,
             score1: null,
             score2: null,
           }))
@@ -90,8 +95,8 @@ export default function PlayoffBracket({ playoffData, onSaveResults, playoffSize
       setSemifinals((prev) =>
         prev.map((match, i) => ({
           ...match,
-          player1: winners[i * 2] || match.player1,
-          player2: winners[i * 2 + 1] || match.player2,
+          player1_id: winners[i * 2] || match.player1_id,
+          player2_id: winners[i * 2 + 1] || match.player2_id,
         }))
       );
     }
@@ -102,8 +107,8 @@ export default function PlayoffBracket({ playoffData, onSaveResults, playoffSize
     setFinals((prev) =>
       prev.map((match) => ({
         ...match,
-        player1: winners[0] || match.player1,
-        player2: winners[1] || match.player2,
+        player1_id: winners[0] || match.player1_id,
+        player2_id: winners[1] || match.player2_id,
       }))
     );
   }, [semifinals]);
@@ -116,13 +121,14 @@ export default function PlayoffBracket({ playoffData, onSaveResults, playoffSize
     });
 
     const finalMatch = finals[0];
-    const winner = getWinner(finalMatch);
+    const winnerId = getWinner(finalMatch);
 
-    if (!finalMatch || finalMatch.score1 === null || finalMatch.score2 === null || !winner) {
+    if (!finalMatch || finalMatch.score1 === null || finalMatch.score2 === null || !winnerId) {
       setStatusMessage("❌ Alla matcher är inte färdigspelade.");
       setTimeout(() => setStatusMessage(null), 5000);
     } else {
-      setStatusMessage(`🏆 ${winner} är vinnaren!`);
+      const winnerName = getPlayerName(winnerId);
+      setStatusMessage(`🏆 ${winnerName} är vinnaren!`);
     }
   }
 
@@ -131,7 +137,9 @@ export default function PlayoffBracket({ playoffData, onSaveResults, playoffSize
       key={match.id}
       className="flex flex-wrap items-center justify-between mb-3 p-3 border rounded"
     >
-      <div className="w-full sm:w-40 truncate mb-1 sm:mb-0">{match.player1}</div>
+      <div className="w-full sm:w-40 truncate mb-1 sm:mb-0">
+        {match.player1_id ? getPlayerName(match.player1_id) : "TBD"}
+      </div>
       <input
         type="number"
         min="0"
@@ -147,7 +155,9 @@ export default function PlayoffBracket({ playoffData, onSaveResults, playoffSize
         value={match.score2 === null ? "" : match.score2}
         onChange={(e) => updateMatch(roundSetter, match.id, 2, e.target.value)}
       />
-      <div className="w-full sm:w-40 truncate text-right mt-1 sm:mt-0">{match.player2}</div>
+      <div className="w-full sm:w-40 truncate text-right mt-1 sm:mt-0">
+        {match.player2_id ? getPlayerName(match.player2_id) : "TBD"}
+      </div>
     </div>
   );
 

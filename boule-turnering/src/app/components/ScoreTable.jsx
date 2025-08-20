@@ -1,79 +1,56 @@
-import React, { useEffect } from "react";
+"use client";
+import { useState, useEffect } from "react";
 
-export default function ScoreTable({ players, rounds, onStandingsUpdate }) {
-  const allMatches = [...rounds.round1, ...rounds.round2];
+export default function ScoreTable({ players, matches = [], onStandingsUpdate }) {
+  const [standings, setStandings] = useState([]);
 
-  const playerStats = players.map((player) => {
-    let points = 0;
-    let goalDifference = 0;
+  useEffect(() => {
+    if (!players || players.length === 0) return;
 
-    allMatches.forEach((match) => {
-      if (match.score1 !== null && match.score2 !== null) {
-        if (match.player1 === player || match.player2 === player) {
-          const goalsFor = match.player1 === player ? match.score1 : match.score2;
-          const goalsAgainst = match.player1 === player ? match.score2 : match.score1;
-          goalDifference += goalsFor - goalsAgainst;
+    // Initiera standings med alla spelare
+    const initialStandings = players.map((p) => ({
+      id: p.id,
+      name: p.name,
+      points: 0,
+    }));
 
-          if (match.score1 === match.score2) {
-            points += 0.5;
-          } else if (
-            (match.player1 === player && match.score1 > match.score2) ||
-            (match.player2 === player && match.score2 > match.score1)
-          ) {
-            points += 1;
-          }
-        }
+    // Beräkna poäng från matcherna
+    matches.forEach((match) => {
+      if (match.winner_id) {
+        const winner = initialStandings.find((p) => p.id === match.winner_id);
+        if (winner) winner.points += 1;
       }
     });
 
-    return { player, points, goalDifference };
-  });
+    // Sortera standings (flest poäng först)
+    const sortedStandings = [...initialStandings].sort((a, b) => b.points - a.points);
 
-  const sortedStats = [...playerStats].sort((a, b) => {
-    if (b.points !== a.points) return b.points - a.points;
-    if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
-    return Math.random() < 0.5 ? -1 : 1;
-  });
+    setStandings(sortedStandings);
 
-  useEffect(() => {
     if (onStandingsUpdate) {
-      onStandingsUpdate(sortedStats.map((p) => p.player));
+      onStandingsUpdate(sortedStandings);
     }
-  }, [rounds, onStandingsUpdate]);
-
-  const lineAfter = players.length <= 15 ? 4 : 8;
+  }, [players, matches, onStandingsUpdate]);
 
   return (
-    <div className="bg-white bg-opacity-90 text-black p-4 rounded shadow-md max-w-full">
-      <h2 className="text-xl font-semibold mb-4 text-center sm:text-left">Live tabell</h2>
-      {sortedStats.length === 0 ? (
-        <p className="text-center text-gray-600">Poängställning kommer visas här</p>
-      ) : (
-        <table className="min-w-[320px] w-full text-center border-collapse">
-          <thead>
-            <tr>
-              <th className="border-b px-3 py-2">#</th>
-              <th className="border-b px-3 py-2">Spelare</th>
-              <th className="border-b px-3 py-2">Poäng</th>
-              <th className="border-b px-3 py-2">Målskillnad</th>
+    <div className="p-4 border rounded-lg shadow-md">
+      <h3 className="text-lg font-semibold mb-3">Ställning</h3>
+      <table className="w-full border-collapse">
+        <thead>
+          <tr className="border-b">
+            <th className="text-left p-2">Spelare</th>
+            <th className="text-center p-2">Poäng</th>
+          </tr>
+        </thead>
+        <tbody>
+          {standings.map((player) => (
+            <tr key={player.id} className="border-b">
+              <td className="p-2">{player.name}</td>
+              <td className="text-center p-2">{player.points}</td>
             </tr>
-          </thead>
-          <tbody>
-            {sortedStats.map(({ player, points, goalDifference }, index) => {
-              const borderClass =
-                index + 1 === lineAfter ? "border-b-4 border-yellow-500" : "border-b";
-              return (
-                <tr key={player} className={borderClass}>
-                  <td className="px-3 py-2 font-semibold">{index + 1}.</td>
-                  <td className="px-3 py-2 truncate max-w-xs">{player}</td>
-                  <td className="px-3 py-2 text-center">{points}</td>
-                  <td className="px-3 py-2 text-center">{goalDifference}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      )}
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
