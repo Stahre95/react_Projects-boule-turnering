@@ -6,9 +6,11 @@ import TournamentOverview from "./components/TournamentOverview"; // Vi skapar d
 
 export default function Home() {
   const [players, setPlayers] = useState(null);
+  const [playoffType, setPlayoffType] = useState("kvartsfinal")
 
-  const handleStartTournament = (playerNames) => {
+  const handleStartTournament = (playerNames, playoff) => {
     setPlayers(playerNames);
+    setPlayoffType(playoff);
   };
 
   return (
@@ -16,7 +18,7 @@ export default function Home() {
       {!players ? (
         <HeroSection onStart={handleStartTournament} />
       ) : (
-        <TournamentOverview players={players} />
+        <TournamentOverview players={players} playoffType={playoffType}/>
       )}
     </>
   );
