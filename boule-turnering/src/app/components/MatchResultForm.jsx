@@ -18,18 +18,22 @@ const MatchResultForm = ({ rounds, onSave }) => {
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-white text-black p-6 rounded-xl shadow-lg space-y-8 max-w-md mx-auto"
+      className="bg-white text-black p-6 rounded-2xl shadow-xl space-y-8 max-w-lg mx-auto"
     >
       {Object.entries(updatedRounds).map(([roundName, matches]) => (
         <div key={roundName}>
-          <h3 className="text-xl font-bold mb-4 capitalize text-center">{roundName}</h3>
+          <h3 className="text-2xl font-bold mb-4 capitalize text-center">
+            {roundName.replace("round", "Omgång ")}
+          </h3>
           <div className="space-y-4">
             {matches.map((match, index) => (
               <div
                 key={index}
-                className="grid grid-cols-[1fr_40px_40px_40px_1fr] items-center gap-2"
+                className="grid grid-cols-[1fr_50px_30px_50px_1fr] items-center gap-3 p-2 bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition"
               >
-                <span className="truncate text-right pr-2">{match.player1}</span>
+                <span className="truncate text-right pr-2 font-medium">
+                  {match.player1}
+                </span>
 
                 <input
                   type="number"
@@ -37,11 +41,11 @@ const MatchResultForm = ({ rounds, onSave }) => {
                   onChange={(e) =>
                     handleInputChange(roundName, index, "score1", e.target.value)
                   }
-                  className="w-10 border rounded px-2 py-1 text-center text-sm"
+                  className="w-12 border rounded-lg px-2 py-1 text-center text-sm"
                   min="0"
                 />
 
-                <span className="text-center font-bold">-</span>
+                <span className="text-center font-bold text-gray-700">-</span>
 
                 <input
                   type="number"
@@ -49,11 +53,11 @@ const MatchResultForm = ({ rounds, onSave }) => {
                   onChange={(e) =>
                     handleInputChange(roundName, index, "score2", e.target.value)
                   }
-                  className="w-10 border rounded px-2 py-1 text-center text-sm"
+                  className="w-12 border rounded-lg px-2 py-1 text-center text-sm"
                   min="0"
                 />
 
-                <span className="truncate pl-2">{match.player2}</span>
+                <span className="truncate pl-2 font-medium">{match.player2}</span>
               </div>
             ))}
           </div>
@@ -63,7 +67,7 @@ const MatchResultForm = ({ rounds, onSave }) => {
       <div className="pt-6 text-center">
         <button
           type="submit"
-          className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition text-lg font-semibold"
+          className="bg-yellow-400 hover:bg-yellow-500 text-black px-6 py-3 rounded-xl shadow-md font-semibold text-lg transition"
         >
           Spara resultat
         </button>
