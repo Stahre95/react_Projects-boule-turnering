@@ -136,63 +136,71 @@ export default function PlayoffBracket({ playoffData, onSaveResults, playoffType
   const renderMatch = (match, roundSetter) => (
     <div
       key={match.id}
-      className="grid grid-cols-[1fr_40px_40px_40px_1fr] items-center gap-2 mb-3 p-3 border border-gray-300 rounded-lg shadow-sm hover:shadow-md transition bg-white"
+      className="grid grid-cols-[1fr_auto_20px_auto_1fr] items-center gap-3 p-4 bg-slate-950/40 rounded-3xl border border-white/10 hover:bg-slate-950/60 transition mb-4"
     >
-      <span className="truncate text-right pr-2">{match.player1}</span>
+      <span className="truncate text-right pr-2 font-medium text-white">{match.player1}</span>
       <input
         type="number"
         min="0"
-        className="w-10 border rounded px-2 py-1 text-center text-sm"
+        className="w-10 sm:w-12 border border-white/10 rounded-3xl px-2 py-2 text-center text-sm bg-white/10 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-400"
         value={match.score1 ?? ""}
         onChange={(e) => updateMatch(roundSetter, match.id, 1, e.target.value)}
       />
-      <span className="text-center font-bold">-</span>
+      <span className="text-center font-bold text-gray-300">-</span>
       <input
         type="number"
         min="0"
-        className="w-10 border rounded px-2 py-1 text-center text-sm"
+        className="w-10 sm:w-12 border border-white/10 rounded-3xl px-2 py-2 text-center text-sm bg-white/10 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-400"
         value={match.score2 ?? ""}
         onChange={(e) => updateMatch(roundSetter, match.id, 2, e.target.value)}
       />
-      <span className="truncate pl-2 text-left">{match.player2}</span>
+      <span className="truncate pl-2 font-medium text-white">{match.player2}</span>
     </div>
   );
 
   return (
-    <div className="bg-white bg-opacity-90 text-black p-6 rounded-xl shadow-md max-w-full mx-auto">
-      <h2 className="text-xl sm:text-2xl font-bold mb-4 text-center">
-        Slutspel ({playoffType === "kvartsfinal" ? "Top 8" : playoffType === "semifinal" ? "Top 4" : "Final"})
-      </h2>
+    <div className="bg-white/10 backdrop-blur-xl border border-white/10 rounded-[32px] shadow-2xl p-6 sm:p-8 max-w-full mx-auto text-white">
+      <div className="text-center mb-6">
+        <p className="text-sm uppercase tracking-[0.35em] text-yellow-300 mb-3">Slutspel</p>
+        <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight">
+          {playoffType === "kvartsfinal" ? "Top 8" : playoffType === "semifinal" ? "Top 4" : "Final"}
+        </h2>
+        <p className="mt-3 text-sm text-gray-300">
+          Ange resultat för varje match i turneringens slutspel.
+        </p>
+      </div>
 
       {playoffType === "kvartsfinal" && (
         <div className="mb-6">
-          <h3 className="text-lg sm:text-xl font-semibold mb-2">Kvartsfinaler</h3>
+          <h3 className="text-lg sm:text-xl font-semibold mb-4 text-white">Kvartsfinaler</h3>
           {quarterfinals.map((match) => renderMatch(match, setQuarterfinals))}
         </div>
       )}
 
       {(playoffType === "kvartsfinal" || playoffType === "semifinal") && (
         <div className="mb-6">
-          <h3 className="text-lg sm:text-xl font-semibold mb-2">Semifinaler</h3>
+          <h3 className="text-lg sm:text-xl font-semibold mb-4 text-white">Semifinaler</h3>
           {semifinals.map((match) => renderMatch(match, setSemifinals))}
         </div>
       )}
 
       {(playoffType === "kvartsfinal" || playoffType === "semifinal" || playoffType === "final") && (
         <div className="mb-6">
-          <h3 className="text-lg sm:text-xl font-semibold mb-2">Final</h3>
+          <h3 className="text-lg sm:text-xl font-semibold mb-4 text-white">Final</h3>
           {finals.map((match) => renderMatch(match, setFinals))}
         </div>
       )}
 
-      <button
-        onClick={handleSave}
-        className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-3 px-8 rounded-xl text-lg shadow-md transition block mx-auto"
-      >
-        Spara slutspel
-      </button>
+      <div className="text-center">
+        <button
+          onClick={handleSave}
+          className="bg-yellow-400 hover:bg-yellow-500 text-black px-6 py-3 rounded-full shadow-xl font-semibold text-lg transition"
+        >
+          Spara slutspel
+        </button>
+      </div>
 
-      {statusMessage && <div className="mt-4 text-center text-base sm:text-lg font-medium">{statusMessage}</div>}
+      {statusMessage && <div className="mt-4 text-center text-base sm:text-lg font-medium text-white">{statusMessage}</div>}
     </div>
   );
 }

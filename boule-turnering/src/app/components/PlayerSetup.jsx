@@ -92,32 +92,40 @@ export default function PlayerSetup({ onStart }) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="w-full max-w-3xl mx-auto p-6 sm:p-8 
-                 bg-white/90 backdrop-blur-md 
-                 rounded-2xl shadow-2xl text-black"
+      className="w-full max-w-3xl mx-auto p-5 sm:p-7 lg:p-8 pb-16 sm:pb-20 bg-white/10 backdrop-blur-xl border border-white/10 rounded-[32px] shadow-2xl text-white max-h-[calc(100vh-4rem)] overflow-hidden"
     >
+      <div className="mb-6 sm:mb-8 text-center">
+        <p className="text-sm uppercase tracking-[0.35em] text-yellow-300 mb-2">Turneringsinställningar</p>
+        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight">
+          Spelare & matchup
+        </h2>
+        <p className="mt-2 text-sm sm:text-base text-gray-300 max-w-2xl mx-auto leading-relaxed">
+          Ange antalet deltagare, namn och slutspelstyp för att skapa en modern bouleturnering.
+        </p>
+      </div>
+
       {/* Antal spelare */}
-      <div className="mb-6 text-center relative" ref={playerCountRef}>
-        <label className="block mb-2 font-semibold text-lg">Antal spelare</label>
+      <div className="mb-8 text-center relative" ref={playerCountRef}>
+        <label className="block mb-3 font-semibold text-lg sm:text-xl text-white">Antal spelare</label>
         <button
           type="button"
           onClick={() => setShowPlayerCountDropdown(prev => !prev)}
-          className="w-40 px-4 py-2 rounded-xl shadow-md bg-white text-black border border-gray-300 font-semibold"
+          className="w-32 sm:w-40 lg:w-48 px-4 py-3 rounded-3xl bg-slate-950/40 text-white border border-white/10 font-semibold shadow-sm transition hover:bg-slate-950/70"
         >
           {playerCount}
         </button>
         <ul
           ref={playerCountListRef}
-          className={`absolute z-10 w-40 mt-1 max-h-60 overflow-y-auto 
-                      bg-white border border-gray-300 rounded shadow-lg
-                      left-1/2 -translate-x-1/2 text-center
+          className={`absolute z-10 w-32 sm:w-40 lg:w-48 mt-2 max-h-60 overflow-y-auto 
+                      bg-slate-950/95 border border-white/10 rounded-3xl shadow-2xl
+                      left-1/2 -translate-x-1/2 text-center text-white
                       transition-all duration-300 ease-in-out
                       ${showPlayerCountDropdown ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"}`}
         >
           {playerCounts.map(num => (
             <li
               key={num}
-              className={`px-4 py-2 cursor-pointer  ${num === playerCount ? "font-bold" : ""}`}
+              className={`px-4 py-3 cursor-pointer ${num === playerCount ? "font-semibold text-yellow-300" : "text-white hover:text-yellow-200"}`}
               onClick={() => handlePlayerCountSelect(num)}
             >
               {num}
@@ -127,52 +135,54 @@ export default function PlayerSetup({ onStart }) {
       </div>
 
       {/* Lista med spelare */}
-      <div className="flex flex-col items-center gap-4 max-h-[60vh] overflow-y-auto pr-1
-                      scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent">
-        {playerNames.map((name, idx) => (
-          <div key={idx} className="w-full max-w-md">
-            <label
-              className="block mb-1 font-medium text-sm text-gray-700"
-              htmlFor={`playerName${idx}`}
-            >
-              Spelare {idx + 1}
-            </label>
-            <input
-              type="text"
-              id={`playerName${idx}`}
-              value={name}
-              onChange={(e) => handleNameChange(idx, e)}
-              placeholder={`Namn på spelare ${idx + 1}`}
-              className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm
-                         focus:outline-none focus:ring-2 focus:ring-yellow-400 placeholder-gray-400 text-base"
-              required
-            />
-          </div>
-        ))}
+      <div className="mb-8">
+        <h3 className="text-lg sm:text-xl font-semibold mb-4 text-center text-white">Spelarnamn</h3>
+        <div className="flex flex-col items-center gap-4 pr-2 overflow-y-auto max-h-[35vh] sm:max-h-[40vh]">
+          {playerNames.map((name, idx) => (
+            <div key={idx} className="w-full max-w-md">
+              <label
+                className="block mb-2 font-medium text-sm text-gray-200"
+                htmlFor={`playerName${idx}`}
+              >
+                Spelare {idx + 1}
+              </label>
+              <input
+                type="text"
+                id={`playerName${idx}`}
+                value={name}
+                onChange={(e) => handleNameChange(idx, e)}
+                placeholder={`Namn på spelare ${idx + 1}`}
+                className="w-full px-4 py-3 bg-white/10 border border-white/10 rounded-3xl shadow-sm
+                           focus:outline-none focus:ring-2 focus:ring-yellow-400 placeholder-gray-300 text-base text-white"
+                required
+              />
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Välj playoff-typ */}
-      <div className="mt-6 mb-4 text-center relative" ref={playoffRef}>
-        <label className="block text-lg font-semibold mb-2">Välj Slutspelstyp</label>
+      <div className="mb-6 text-center relative" ref={playoffRef}>
+        <label className="block text-lg sm:text-xl font-semibold mb-3 text-white">Välj slutspelstyp</label>
         <button
           type="button"
           onClick={() => setShowPlayoffDropdown(prev => !prev)}
-          className="w-52 px-4 py-3 rounded-xl shadow-md bg-white text-black border border-gray-300 font-semibold"
+          className="w-32 sm:w-40 lg:w-48 px-4 py-3 rounded-3xl bg-slate-950/40 text-white border border-white/10 font-semibold shadow-sm transition hover:bg-slate-950/70"
         >
           {playoffOptions.find(o => o.value === playoffType)?.label}
         </button>
         <ul
           ref={playoffListRef}
-          className={`absolute z-10 w-52 mt-1 max-h-60 overflow-y-auto 
-                      bg-white border border-gray-300 rounded shadow-lg
-                      left-1/2 -translate-x-1/2 text-center
+          className={`absolute z-10 w-32 sm:w-40 lg:w-48 mt-2 max-h-60 overflow-y-auto 
+                      bg-slate-950/95 border border-white/10 rounded-3xl shadow-2xl
+                      left-1/2 -translate-x-1/2 text-center text-white
                       transition-all duration-300 ease-in-out
                       ${showPlayoffDropdown ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"}`}
         >
           {playoffOptions.map(opt => (
             <li
               key={opt.value}
-              className="px-4 py-2 hover:bg-yellow-100 cursor-pointer text-center"
+              className="px-4 py-3 hover:text-yellow-200 cursor-pointer text-center text-white transition"
               onClick={() => handlePlayoffSelect(opt.value)}
             >
               {opt.label}
@@ -183,21 +193,23 @@ export default function PlayerSetup({ onStart }) {
 
       {/* Felmeddelande */}
       {error && (
-        <p className="mt-4 p-3 bg-red-100 text-red-700 rounded-lg border border-red-300 text-sm sm:text-base shadow text-center">
+        <div className="mt-4 p-3 bg-red-100/90 text-red-700 rounded-3xl border border-red-300 text-sm sm:text-base shadow-lg text-center backdrop-blur-sm">
           {error}
-        </p>
+        </div>
       )}
 
       {/* Startknapp */}
-      <button
-        type="submit"
-        className="mt-6 w-full py-3 rounded-full text-lg font-semibold
-                   bg-gradient-to-r from-yellow-400 to-yellow-600 text-black
-                   hover:from-yellow-300 hover:to-yellow-500 
-                   shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
-      >
-        Starta turnering
-      </button>
+      <div className="mt-6 mb-8 flex justify-center">
+        <button
+          type="submit"
+          className="px-8 py-3 rounded-full text-lg font-semibold
+                     bg-gradient-to-r from-yellow-400 to-yellow-600 text-black
+                     hover:from-yellow-300 hover:to-yellow-500 
+                     shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
+        >
+          Starta turnering
+        </button>
+      </div>
     </form>
   );
 }

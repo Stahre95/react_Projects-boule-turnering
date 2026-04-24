@@ -89,141 +89,139 @@ export default function TournamentOverview({ players, playoffType }) {
 
   return (
     <section
-      className="relative min-h-screen bg-cover bg-center flex flex-col items-center justify-start text-white px-4 sm:px-6 md:px-10 pt-10"
+      className="relative min-h-screen bg-cover bg-center flex flex-col items-center justify-start text-white px-4 sm:px-6 md:px-10 pt-24"
       style={{ backgroundImage: "url('/images/hero_background.jpg')" }}
     >
-      <div className="absolute inset-0 bg-black opacity-60"></div>
+      <div className="absolute inset-0 bg-black/70"></div>
 
-      <div className="min-h-screen w-full relative py-16 px-4 sm:px-6 md:px-10">
-        <div className="relative z-10 max-w-6xl mx-auto text-white">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-8 text-center">
-            Turneringsöversikt
-          </h1>
+      <div className="relative z-10 w-full max-w-7xl mx-auto h-[calc(100vh-6rem)] overflow-hidden">
+        <div className="h-full rounded-[36px] border border-white/10 bg-white/10 backdrop-blur-xl shadow-2xl overflow-hidden">
+          <div className="h-full overflow-y-auto p-8 sm:p-10">
+            <div className="pb-8 border-b border-white/10 mb-8">
+              <p className="text-sm uppercase tracking-[0.35em] text-yellow-300 mb-3">Turneringsöversikt</p>
+              <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight">
+                Din turnering
+              </h1>
+              <p className="mt-3 text-sm sm:text-base text-gray-300 max-w-3xl">
+                Se matcher, resultat och slutspel i en modern översikt. Alla delar håller sig inom samma panel.
+              </p>
+            </div>
 
-          {/* ✅ Minimalistisk spelarlista */}
-          <div className="mb-10">
-            <ul className="flex flex-wrap justify-center gap-2">
-              {players.map((name, index) => (
-                <li
-                  key={index}
-                  className="bg-white text-black px-3 py-1 rounded-full shadow-sm text-sm font-medium"
-                >
-                  {name}
-                </li>
-              ))}
-            </ul>
-          </div>
+            <div className="mb-8">
+              <ul className="grid grid-cols-2 sm:grid-cols-4 gap-2 justify-items-center">
+                {players.map((name, index) => (
+                  <li
+                    key={index}
+                    className="bg-slate-950/70 text-white px-3 py-1 rounded-full border border-white/10 text-sm font-medium truncate max-w-full"
+                  >
+                    {name}
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-          {/* ✅ Matcher & tabell */}
-          <div className="grid grid-cols-1 md:grid-cols-7 gap-6 mb-8">
-            {/* Omgång 1 */}
-            <div className="md:col-span-2 bg-white bg-opacity-90 text-black p-4 rounded-lg shadow">
-              <h2 className="text-lg sm:text-xl font-semibold mb-3">Omgång 1</h2>
-              {rounds.round1.map((match, i) => (
-                <div
-                  key={i}
-                  className="mb-3 p-3 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition bg-white"
-                >
-                  <div className="flex justify-between items-center">
-                    <p className="font-medium">
-                      {match.player1} vs {match.player2}
-                    </p>
-                    {match.score1 !== null && match.score2 !== null ? (
-                      <span className="text-sm font-semibold text-gray-700">
-                        {match.score1} - {match.score2}
-                      </span>
-                    ) : (
-                      <span className="text-sm font-semibold text-red-500">
-                        Ej spelad
-                      </span>
-                    )}
-                  </div>
+            <div className="grid grid-cols-1 lg:grid-cols-7 gap-8 mb-8">
+              <div className="lg:col-span-2 bg-slate-950/50 border border-white/10 rounded-[28px] p-5 overflow-hidden">
+                <h2 className="text-lg sm:text-xl font-semibold mb-4">Omgång 1</h2>
+                <div className="space-y-3 pr-2">
+                  {rounds.round1.map((match, i) => (
+                    <div
+                      key={i}
+                      className="p-4 rounded-3xl bg-white/5 border border-white/10 transition hover:bg-white/10"
+                    >
+                      <div className="flex justify-between items-center gap-3">
+                        <p className="font-medium text-white">{match.player1} vs {match.player2}</p>
+                        {match.score1 !== null && match.score2 !== null ? (
+                          <span className="text-sm font-semibold text-yellow-300">
+                            {match.score1} - {match.score2}
+                          </span>
+                        ) : (
+                          <span className="text-sm font-semibold text-red-400">
+                            Ej spelad
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
 
-            {/* Omgång 2 */}
-            <div className="md:col-span-2 bg-white bg-opacity-90 text-black p-4 rounded-lg shadow">
-              <h2 className="text-lg sm:text-xl font-semibold mb-3">Omgång 2</h2>
-              {rounds.round2.map((match, i) => (
-                <div
-                  key={i}
-                  className="mb-3 p-3 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition bg-white"
-                >
-                  <div className="flex justify-between items-center">
-                    <p className="font-medium">
-                      {match.player1} vs {match.player2}
-                    </p>
-                    {match.score1 !== null && match.score2 !== null ? (
-                      <span className="text-sm font-semibold text-gray-700">
-                        {match.score1} - {match.score2}
-                      </span>
-                    ) : (
-                      <span className="text-sm font-semibold text-red-500">
-                        Ej spelad
-                      </span>
-                    )}
-                  </div>
+              <div className="lg:col-span-2 bg-slate-950/50 border border-white/10 rounded-[28px] p-5 overflow-hidden">
+                <h2 className="text-lg sm:text-xl font-semibold mb-4">Omgång 2</h2>
+                <div className="space-y-3 pr-2">
+                  {rounds.round2.map((match, i) => (
+                    <div
+                      key={i}
+                      className="p-4 rounded-3xl bg-white/5 border border-white/10 transition hover:bg-white/10"
+                    >
+                      <div className="flex justify-between items-center gap-3">
+                        <p className="font-medium text-white">{match.player1} vs {match.player2}</p>
+                        {match.score1 !== null && match.score2 !== null ? (
+                          <span className="text-sm font-semibold text-yellow-300">
+                            {match.score1} - {match.score2}
+                          </span>
+                        ) : (
+                          <span className="text-sm font-semibold text-red-400">
+                            Ej spelad
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+
+              <div className="lg:col-span-3 bg-slate-950/55 border border-white/10 rounded-[28px] p-5 overflow-x-auto">
+                <ScoreTable
+                  players={players}
+                  rounds={rounds}
+                  onStandingsUpdate={setStandings}
+                  playoffType={playoffType}
+                />
+              </div>
             </div>
 
-            {/* Live tabell */}
-            <div className="md:col-span-3 bg-white bg-opacity-90 text-black p-4 rounded-lg shadow overflow-x-auto">
-              <ScoreTable
-                players={players}
-                rounds={rounds}
-                onStandingsUpdate={setStandings}
-                playoffType={playoffType}
-              />
-            </div>
-          </div>
-
-          {/* Knappar */}
-          <div className="text-center flex flex-col sm:flex-row justify-center gap-4 mt-6">
-            {/* Registrera resultat */}
-            <button
-              className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-3 px-8 rounded-xl text-lg shadow-md transition"
-              onClick={() => setShowForm(!showForm)}
-              disabled={showPlayoff}
-            >
-              {showForm ? "Dölj formulär" : "Registrera resultat"}
-            </button>
-
-            {/* Spara gruppspel och visa slutspel */}
-            {allGroupMatchesPlayed(rounds) && !showPlayoff && (
+            <div className="flex flex-col sm:flex-row justify-center gap-4 mt-2 mb-6">
               <button
-                className="bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-6 rounded-xl text-lg shadow-md transition"
-                onClick={handleShowPlayoff}
+                className="w-full sm:w-auto bg-yellow-400 hover:bg-yellow-500 text-black font-semibold py-3 px-8 rounded-full shadow-xl transition"
+                onClick={() => setShowForm(!showForm)}
+                disabled={showPlayoff}
               >
-                Till slutspel
+                {showForm ? "Dölj formulär" : "Registrera resultat"}
               </button>
+
+              {allGroupMatchesPlayed(rounds) && !showPlayoff && (
+                <button
+                  className="w-full sm:w-auto bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-8 rounded-full shadow-xl transition"
+                  onClick={handleShowPlayoff}
+                >
+                  Till slutspel
+                </button>
+              )}
+            </div>
+
+            {showForm && (
+              <div className="mt-6">
+                <MatchResultForm
+                  rounds={rounds}
+                  players={players}
+                  onSave={handleSaveResults}
+                  onCancel={() => setShowForm(false)}
+                />
+              </div>
+            )}
+
+            {showPlayoff && (
+              <div className="mt-10">
+                <PlayoffBracket
+                  playoffData={playoffData}
+                  onSaveResults={handleSavePlayoffResults}
+                  playoffType={playoffType}
+                  players={standings}
+                />
+              </div>
             )}
           </div>
-
-          {/* ✅ MatchResultForm */}
-          {showForm && (
-            <div className="mt-6">
-              <MatchResultForm
-                rounds={rounds}
-                players={players}
-                onSave={handleSaveResults}
-                onCancel={() => setShowForm(false)}
-              />
-            </div>
-          )}
-
-          {/* ✅ Slutspel */}
-          {showPlayoff && (
-            <div className="mt-10 px-4 sm:px-0">
-              <PlayoffBracket
-                playoffData={playoffData}
-                onSaveResults={handleSavePlayoffResults}
-                playoffType={playoffType}
-                players={standings}
-              />
-            </div>
-          )}
         </div>
       </div>
     </section>
