@@ -59,7 +59,7 @@ export default function ScoreTable({ players, rounds, onStandingsUpdate, playoff
       {sortedStats.length === 0 ? (
         <p className="text-center text-gray-600">Poängställning kommer visas här</p>
       ) : (
-        <table className="w-full text-center sm:text-left border border-gray-200 rounded-lg shadow-sm min-w-[300px]">
+        <table className="w-full text-center sm:text-left border border-gray-200 rounded-lg shadow-sm min-w-[280px] sm:min-w-[350px]">
           <thead className="bg-gray-100 text-gray-700">
             <tr>
               <th className="border-b px-2 sm:px-3 py-2">#</th>
@@ -75,7 +75,7 @@ export default function ScoreTable({ players, rounds, onStandingsUpdate, playoff
               const borderClass =
                 index + 1 === lineAfter ? "border-b-4 border-yellow-500" : "border-b";
               return (
-                <tr key={player} className={`${borderClass} hover:bg-gray-50`}>
+                <tr key={player} className={`${borderClass} hover:bg-white hover:text-black transition`}>
                   <td className="px-2 sm:px-3 py-2 font-semibold">{index + 1}.</td>
                   <td className="px-2 sm:px-3 py-2 truncate max-w-[120px] sm:max-w-none">{player}</td>
                   <td className="px-2 sm:px-3 py-2 text-center">{points}</td>
