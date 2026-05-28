@@ -82,8 +82,10 @@ export default function PlayerSetup({ onStart }) {
     setShowPlayoffDropdown(false);
   };
 
-  const playerCounts = Array.from({ length: 29 }, (_, i) => i + 2);
+  const playerCounts = Array.from({ length: 39 }, (_, i) => i + 2);
   const playoffOptions = [
+    { label: "Sextondelsfinal", value: "sextondelsfinal" },
+    { label: "Åttondelsfinal", value: "åttondelsfinal" },
     { label: "Kvartsfinal", value: "kvartsfinal" },
     { label: "Semifinal", value: "semifinal" },
     { label: "Final", value: "final" },
