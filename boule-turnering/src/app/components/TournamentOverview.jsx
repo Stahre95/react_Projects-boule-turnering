@@ -1,4 +1,8 @@
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "../context/AuthContext";
+import { db } from "../firebase";
+import { doc, deleteDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { generateMatchRounds } from "../components/generateMatchRounds";
 import MatchResultForm from "./MatchResultForm";
 import ScoreTable from "./ScoreTable";
@@ -13,12 +17,15 @@ function shortenName(fullName) {
 }
 
 export default function TournamentOverview({ players, playoffType }) {
+  const router = useRouter();
+  const { user } = useAuth();
   const [rounds, setRounds] = useState({ round1: [], round2: [] });
   const [showForm, setShowForm] = useState(false);
   const [showPlayoff, setShowPlayoff] = useState(false);
   const [playoffData, setPlayoffData] = useState(null);
   const [playoffSize, setPlayoffSize] = useState(0);
   const [standings, setStandings] = useState([]);
+  const [deletingTournament, setDeletingTournament] = useState(false);
 
   // Generera matcher när players ändras
   useEffect(() => {
@@ -38,9 +45,22 @@ export default function TournamentOverview({ players, playoffType }) {
   }
 
   // Spara resultat från MatchResultForm
-  const handleSaveResults = (updatedRounds) => {
+  const handleSaveResults = async (updatedRounds) => {
     setRounds(updatedRounds);
     setShowForm(false);
+
+    try {
+      const activeId = localStorage.getItem('activeTournamentId');
+      if (activeId && user) {
+        const tRef = doc(db, 'tournaments', activeId);
+        await updateDoc(tRef, {
+          groupRounds: updatedRounds,
+          updatedAt: serverTimestamp(),
+        });
+      }
+    } catch (err) {
+      console.warn('Failed to persist group round results to Firestore', err);
+    }
   };
 
   // Beräkna och visa slutspel
@@ -92,6 +112,49 @@ export default function TournamentOverview({ players, playoffType }) {
 
   const handleSavePlayoffResults = (updatedData) => {
     setPlayoffData(updatedData);
+
+    // If finals are complete, finalize tournament in Firestore and clear local active tournament
+    try {
+      const finalMatch = (updatedData.finals && updatedData.finals[0]) || null;
+      const winner = finalMatch ? (finalMatch.score1 > finalMatch.score2 ? finalMatch.player1 : finalMatch.score2 > finalMatch.score1 ? finalMatch.player2 : null) : null;
+      if (finalMatch && finalMatch.score1 != null && finalMatch.score2 != null && winner) {
+        const activeId = localStorage.getItem('activeTournamentId');
+        if (activeId && user) {
+          const tRef = doc(db, 'tournaments', activeId);
+          updateDoc(tRef, {
+            status: 'finished',
+            playoffData: updatedData,
+            winner: winner,
+            finishedAt: serverTimestamp(),
+          }).catch((err) => console.warn('Failed to finalize tournament in Firestore', err));
+        }
+        // remove local active tournament
+        try { localStorage.removeItem('activeTournament'); localStorage.removeItem('activeTournamentId'); } catch (e) {}
+      }
+    } catch (err) {
+      console.warn('Error while finalizing tournament:', err);
+    }
+  };
+
+  const handleDeleteTournament = async () => {
+    const confirmed = window.confirm('Är du säker på att du vill ta bort den här turneringen? Denna åtgärd går inte att ångra.');
+    if (!confirmed) return;
+    setDeletingTournament(true);
+
+    try {
+      const activeId = localStorage.getItem('activeTournamentId');
+      if (activeId && user) {
+        await deleteDoc(doc(db, 'tournaments', activeId));
+      }
+      localStorage.removeItem('activeTournament');
+      localStorage.removeItem('activeTournamentId');
+      router.push('/');
+    } catch (err) {
+      console.warn('Failed to delete active tournament', err);
+      window.alert('Kunde inte ta bort turneringen. Försök igen senare.');
+    } finally {
+      setDeletingTournament(false);
+    }
   };
 
   return (
@@ -206,6 +269,15 @@ export default function TournamentOverview({ players, playoffType }) {
                   Till slutspel
                 </button>
               )}
+
+              <button
+                type="button"
+                onClick={handleDeleteTournament}
+                disabled={deletingTournament}
+                className="w-full sm:w-auto bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-8 rounded-full shadow-xl transition disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {deletingTournament ? "Tar bort..." : "Ta bort turnering"}
+              </button>
             </div>
 
             {showForm && (
