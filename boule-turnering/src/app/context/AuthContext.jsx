@@ -2,7 +2,8 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile } from 'firebase/auth';
-import { auth } from '../firebase';
+import { auth, db } from '../firebase';
+import { doc, setDoc } from 'firebase/firestore';
 
 const AuthContext = createContext();
 
@@ -60,12 +61,29 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const register = async (email, password, firstName) => {
+  const register = async (email, password, firstName, lastName) => {
     try {
       setError(null);
       const result = await createUserWithEmailAndPassword(auth, email, password);
-      if (firstName && result.user) {
-        await updateProfile(result.user, { displayName: firstName });
+      if (result.user) {
+        const displayName = `${firstName || ''} ${lastName || ''}`.trim();
+        try {
+          await updateProfile(result.user, { displayName });
+        } catch (updErr) {
+          console.warn('Failed to update auth profile displayName:', updErr);
+        }
+
+        // Write additional profile fields into Firestore users collection
+        try {
+          await setDoc(doc(db, 'users', result.user.uid), {
+            firstName: firstName || '',
+            lastName: lastName || '',
+            displayName,
+            email: result.user.email || '',
+          });
+        } catch (fsErr) {
+          console.warn('Failed to create user document in Firestore:', fsErr);
+        }
       }
       return result;
     } catch (err) {

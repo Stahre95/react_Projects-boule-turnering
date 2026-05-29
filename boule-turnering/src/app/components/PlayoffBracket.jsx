@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from "react";
 
+function shortenName(fullName) {
+  if (!fullName) return "";
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
+}
+
 export default function PlayoffBracket({ playoffData, onSaveResults, playoffType, players }) {
   const [roundOf32, setRoundOf32] = useState([]);
   const [roundOf16, setRoundOf16] = useState([]);
@@ -221,7 +228,7 @@ export default function PlayoffBracket({ playoffData, onSaveResults, playoffType
       key={match.id}
       className="grid grid-cols-[1fr_auto_20px_auto_1fr] items-center gap-3 p-4 bg-slate-950/40 rounded-3xl border border-white/10 hover:bg-slate-950/60 transition mb-4"
     >
-      <span className="truncate text-right pr-2 font-medium text-white">{match.player1}</span>
+      <span className="truncate text-right pr-2 font-medium text-white">{shortenName(match.player1)}</span>
       <input
         type="number"
         min="0"
@@ -237,7 +244,7 @@ export default function PlayoffBracket({ playoffData, onSaveResults, playoffType
         value={match.score2 ?? ""}
         onChange={(e) => updateMatch(roundSetter, match.id, 2, e.target.value)}
       />
-      <span className="truncate pl-2 font-medium text-white">{match.player2}</span>
+      <span className="truncate pl-2 font-medium text-white">{shortenName(match.player2)}</span>
     </div>
   );
 

@@ -1,11 +1,22 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
+import { db } from "../firebase";
+import { collection, getDocs, getDocsFromCache, doc, getDoc } from "firebase/firestore";
 
 export default function PlayerSetup({ onStart }) {
+  const { user } = useAuth();
   const [playerCount, setPlayerCount] = useState(16);
-  const [playerNames, setPlayerNames] = useState(Array(16).fill(""));
+  const [registeredUsers, setRegisteredUsers] = useState([]);
+  const [fetchBlocked, setFetchBlocked] = useState(false);
+  const [playerSlots, setPlayerSlots] = useState(
+    Array(16)
+      .fill(0)
+      .map(() => ({ useGuest: false, userId: null, name: "" }))
+  );
   const [playoffType, setPlayoffType] = useState("kvartsfinal");
   const [error, setError] = useState("");
+  const [openPlayerDropdown, setOpenPlayerDropdown] = useState(null);
 
   const [showPlayerCountDropdown, setShowPlayerCountDropdown] = useState(false);
   const [showPlayoffDropdown, setShowPlayoffDropdown] = useState(false);
@@ -23,6 +34,17 @@ export default function PlayerSetup({ onStart }) {
       }
       if (playoffRef.current && !playoffRef.current.contains(e.target)) {
         setShowPlayoffDropdown(false);
+      }
+      // Close player dropdown if clicked outside
+      const playerSelects = document.querySelectorAll('[id^="playerSelect"]');
+      let clickedInsidePlayerSelect = false;
+      playerSelects.forEach((el) => {
+        if (el.contains(e.target) || (el.nextSibling && el.nextSibling.contains(e.target)) || (el.parentElement && el.parentElement.querySelector('ul') && el.parentElement.querySelector('ul').contains(e.target))) {
+          clickedInsidePlayerSelect = true;
+        }
+      });
+      if (!clickedInsidePlayerSelect) {
+        setOpenPlayerDropdown(null);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -46,33 +68,166 @@ export default function PlayerSetup({ onStart }) {
     }
   }, [showPlayoffDropdown, playoffType]);
 
+  // Fetch registered users from Firestore (if available)
+  useEffect(() => {
+    let mounted = true;
+    if (!user) {
+      // Clear list when not authenticated; reading 'users' may be blocked by security rules
+      setRegisteredUsers([]);
+      return () => (mounted = false);
+    }
+    let blocked = false;
+    const fetchUsers = async () => {
+      try {
+        // Try cache first to avoid opening network streams (adblockers may block them)
+        let snap = null;
+        try {
+          snap = await getDocsFromCache(collection(db, "users"));
+        } catch (cacheErr) {
+          // cache miss or not available
+          snap = null;
+        }
+
+        if (!snap || snap.empty) {
+          // Fallback to server once; if the request is blocked we stop retrying
+          try {
+            snap = await getDocs(collection(db, "users"));
+          } catch (srvErr) {
+            // Detect common blocked-network symptom
+            const msg = (srvErr && srvErr.message) || '';
+            if (msg.includes('ERR_BLOCKED_BY_CLIENT') || msg.includes('blocked')) {
+              blocked = true;
+              console.warn('Firestore network requests appear to be blocked by a browser extension or network policy. Registered users will not be loaded.');
+              // still ensure current user is present
+            } else {
+              console.warn('Failed to fetch registered users from server:', srvErr);
+            }
+            snap = null;
+          }
+        }
+
+        const users = (snap && snap.docs ? snap.docs : [])
+          .map((d) => ({ id: d.id, ...(d.data() || {}) }))
+          .map((u) => ({
+            id: u.id,
+            name: u.firstName && u.lastName ? `${u.firstName} ${u.lastName}` : (u.displayName || u.name || ""),
+          }))
+          .filter((u) => !!u.name)
+          .sort((a, b) => a.name.localeCompare(b.name, "sv", { sensitivity: "base" }));
+
+        let currentUserOption = null;
+        if (user) {
+          try {
+            const userDocRef = doc(db, "users", user.uid);
+            const userSnap = await getDoc(userDocRef);
+            if (userSnap.exists()) {
+              const data = userSnap.data();
+              const name = data?.firstName && data?.lastName ? `${data.firstName} ${data.lastName}` : (data?.displayName || data?.name || user.displayName || user.email?.split("@")[0] || "Min profil");
+              currentUserOption = { id: user.uid, name };
+            } else {
+              const name = user.displayName || user.email?.split("@")[0] || "Min profil";
+              currentUserOption = { id: user.uid, name };
+            }
+          } catch (err) {
+            console.warn("Failed to fetch current user doc:", err);
+            const name = user.displayName || user.email?.split("@")[0] || "Min profil";
+            currentUserOption = { id: user.uid, name };
+          }
+        }
+
+        const merged = currentUserOption
+          ? [currentUserOption, ...users.filter((u) => u.id !== currentUserOption.id)]
+          : users;
+
+        if (mounted) {
+          setRegisteredUsers(merged);
+          try {
+            if (snap && snap.docs) {
+              console.log('Firestore raw user docs:', snap.docs.map(d => ({ id: d.id, data: d.data() })));
+            }
+          } catch (logErr) {
+            console.log('Fetched users (mapped):', merged);
+          }
+        }
+        if (mounted && blocked) setFetchBlocked(true);
+      } catch (err) {
+        console.warn("Failed to fetch registered users:", err);
+      }
+    };
+    fetchUsers();
+    return () => (mounted = false);
+  }, [user]);
+
   const handleNameChange = (index, e) => {
-    const newNames = [...playerNames];
-    newNames[index] = e.target.value;
-    setPlayerNames(newNames);
+    setPlayerSlots((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], name: e.target.value };
+      return next;
+    });
+  };
+
+  const handleSelectPlayer = (index, value) => {
+    setPlayerSlots((prev) => {
+      const next = [...prev];
+      if (value === "guest") {
+        next[index] = { useGuest: true, userId: null, name: "" };
+      } else if (!value) {
+        next[index] = { useGuest: false, userId: null, name: "" };
+      } else {
+        const user = registeredUsers.find((u) => u.id === value);
+        next[index] = { useGuest: false, userId: value, name: user ? user.name : "" };
+      }
+      return next;
+    });
+  };
+
+  const handleGuestNameChange = (index, e) => {
+    setPlayerSlots((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], name: e.target.value };
+      return next;
+    });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     setError("");
 
-    const trimmedNames = playerNames.map((n) => n.trim());
-    const filledNames = trimmedNames.filter((n) => n !== "");
+    const selected = playerSlots.slice(0, playerCount).map((slot) => {
+      if (slot.useGuest) return slot.name.trim();
+      if (slot.userId) {
+        const u = registeredUsers.find((r) => r.id === slot.userId);
+        return u ? u.name : slot.name.trim();
+      }
+      return slot.name.trim();
+    });
 
-    const nameSet = new Set(filledNames);
-    if (nameSet.size !== filledNames.length) {
+    // Require every slot to have a name
+    if (selected.some((n) => !n)) {
+      setError("Alla spelare måste ha ett namn eller väljas från listan.");
+      return;
+    }
+
+    const nameSet = new Set(selected);
+    if (nameSet.size !== selected.length) {
       setError("Två eller flera spelare har samma namn. Namnen måste vara unika.");
       return;
     }
 
-    onStart(filledNames, playoffType);
+    onStart(selected, playoffType);
   };
 
   const handlePlayerCountSelect = (count) => {
     setPlayerCount(count);
     setShowPlayerCountDropdown(false);
-    setPlayerNames((prev) => {
-      if (count > prev.length) return [...prev, ...Array(count - prev.length).fill("")];
+    setPlayerSlots((prev) => {
+      if (count > prev.length)
+        return [
+          ...prev,
+          ...Array(count - prev.length)
+            .fill(0)
+            .map(() => ({ useGuest: false, userId: null, name: "" })),
+        ];
       return prev.slice(0, count);
     });
   };
@@ -102,7 +257,7 @@ export default function PlayerSetup({ onStart }) {
           Spelare & matchup
         </h2>
         <p className="mt-2 text-sm sm:text-base text-gray-300 max-w-2xl mx-auto leading-relaxed">
-          Ange antalet deltagare, namn och slutspelstyp för att skapa en modern bouleturnering.
+          Ange antalet deltagare, namn och slutspelstyp för att skapa din bouleturnering.
         </p>
       </div>
 
@@ -139,28 +294,86 @@ export default function PlayerSetup({ onStart }) {
       {/* Lista med spelare */}
       <div className="mb-8">
         <h3 className="text-lg sm:text-xl font-semibold mb-4 text-center text-white">Spelarnamn</h3>
-        <div className="flex flex-col items-center gap-4 pr-2 overflow-y-auto max-h-[35vh] sm:max-h-[40vh]">
-          {playerNames.map((name, idx) => (
-            <div key={idx} className="w-full max-w-md">
-              <label
-                className="block mb-2 font-medium text-sm text-gray-200"
-                htmlFor={`playerName${idx}`}
-              >
+          {user ? null : (
+            <p className="text-sm text-gray-300 mb-3 text-center">Logga in för att se registrerade användare. Du kan fortfarande lägga till gäster.</p>
+          )}
+          {fetchBlocked && (
+            <p className="text-sm text-yellow-300 mb-3 text-center">Firebasens nätverksanrop blockerades av din webbläsare (adblock/extension). Registrerade användare kan inte laddas.</p>
+          )}
+          <div className="flex flex-col items-center gap-4 pr-2 overflow-y-auto max-h-[40vh] sm:max-h-[44vh]">
+          {playerSlots.slice(0, playerCount).map((slot, idx) => (
+            <div key={idx} className="w-full max-w-md relative">
+              <label className="block mb-2 font-medium text-sm text-gray-200" htmlFor={`playerSelect${idx}`}>
                 Spelare {idx + 1}
               </label>
-              <input
-                type="text"
-                id={`playerName${idx}`}
-                value={name}
-                onChange={(e) => handleNameChange(idx, e)}
-                placeholder={`Namn på spelare ${idx + 1}`}
-                className="w-full px-4 py-3 bg-white/10 border border-white/10 rounded-3xl shadow-sm
+              <button
+                type="button"
+                id={`playerSelect${idx}`}
+                onClick={() => setOpenPlayerDropdown(openPlayerDropdown === idx ? null : idx)}
+                className="w-full px-4 py-3 bg-slate-950/40 border border-white/10 rounded-3xl shadow-sm text-white font-semibold focus:outline-none focus:ring-2 focus:ring-yellow-400 text-left"
+              >
+                {slot.userId
+                  ? registeredUsers.find((u) => u.id === slot.userId)?.name || "Välj spelare"
+                  : slot.useGuest
+                  ? "Gäst (skriv eget namn)"
+                  : "Välj registrerad spelare eller gäst"}
+              </button>
+              <ul
+                className={`absolute z-50 w-full mt-2 max-h-80 overflow-y-auto 
+                           bg-slate-950/95 border border-white/10 rounded-3xl shadow-2xl
+                           text-white
+                           transition-all duration-300 ease-in-out
+                           ${openPlayerDropdown === idx ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"}`}
+              >
+                <li
+                  className="px-4 py-3 hover:text-yellow-200 cursor-pointer text-white transition"
+                  onClick={() => {
+                    handleSelectPlayer(idx, "");
+                    setOpenPlayerDropdown(null);
+                  }}
+                >
+                  (töm val)
+                </li>
+                {registeredUsers.map((u) => (
+                  <li
+                    key={u.id}
+                    className="px-4 py-3 hover:text-yellow-200 cursor-pointer text-white transition"
+                    onClick={() => {
+                      handleSelectPlayer(idx, u.id);
+                      setOpenPlayerDropdown(null);
+                    }}
+                  >
+                    {u.id === user?.uid ? `Jag — ${u.name}` : u.name}
+                  </li>
+                ))}
+                <li
+                  className="px-4 py-3 hover:text-yellow-200 cursor-pointer text-white transition border-t border-white/10"
+                  onClick={() => {
+                    handleSelectPlayer(idx, "guest");
+                    setOpenPlayerDropdown(null);
+                  }}
+                >
+                  Gäst (skriv eget namn)
+                </li>
+              </ul>
+
+              {slot.useGuest && (
+                <input
+                  type="text"
+                  id={`playerName${idx}`}
+                  value={slot.name}
+                  onChange={(e) => handleGuestNameChange(idx, e)}
+                  placeholder={`Namn på gästspelare ${idx + 1}`}
+                  className="mt-3 w-full px-4 py-3 bg-white/10 border border-white/10 rounded-3xl shadow-sm
                            focus:outline-none focus:ring-2 focus:ring-yellow-400 placeholder-gray-300 text-base text-white"
-                required
-              />
+                />
+              )}
             </div>
           ))}
         </div>
+        {user && registeredUsers.length <= 1 && (
+          <p className="mt-3 text-sm text-gray-300 text-center">Inga andra registrerade användare hittades.</p>
+        )}
       </div>
 
       {/* Välj playoff-typ */}

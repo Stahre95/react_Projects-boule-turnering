@@ -4,6 +4,14 @@ import MatchResultForm from "./MatchResultForm";
 import ScoreTable from "./ScoreTable";
 import PlayoffBracket from "./PlayoffBracket";
 
+// Helper function to shorten player names to "Firstname L."
+function shortenName(fullName) {
+  if (!fullName) return "";
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
+}
+
 export default function TournamentOverview({ players, playoffType }) {
   const [rounds, setRounds] = useState({ round1: [], round2: [] });
   const [showForm, setShowForm] = useState(false);
@@ -102,7 +110,7 @@ export default function TournamentOverview({ players, playoffType }) {
                 Din turnering
               </h1>
               <p className="mt-3 text-sm sm:text-base text-gray-300 max-w-3xl">
-                Se matcher, resultat och slutspel i en modern översikt. Alla delar håller sig inom samma panel.
+                Här kan du se alla matcher, uppdatera resultat och följa poängställningen i realtid. När alla gruppmatcher är spelade kan du gå vidare till slutspel.
               </p>
             </div>
 
@@ -119,58 +127,59 @@ export default function TournamentOverview({ players, playoffType }) {
               </ul>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-7 gap-8 mb-8">
-              <div className="lg:col-span-2 bg-slate-950/50 border border-white/10 rounded-[28px] p-5 overflow-hidden">
-                <h2 className="text-lg sm:text-xl font-semibold mb-4">Omgång 1</h2>
-                <div className="space-y-3 pr-2">
-                  {rounds.round1.map((match, i) => (
-                    <div
-                      key={i}
-                      className="p-4 rounded-3xl bg-white/5 border border-white/10 transition hover:bg-white/10"
-                    >
-                      <div className="flex justify-between items-center gap-3">
-                        <p className="font-medium text-white">{match.player1} vs {match.player2}</p>
-                        {match.score1 !== null && match.score2 !== null ? (
-                          <span className="text-sm font-semibold text-yellow-300">
-                            {match.score1} - {match.score2}
-                          </span>
-                        ) : (
-                          <span className="text-sm font-semibold text-red-400">
-                            Ej spelad
-                          </span>
-                        )}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+              <div className="lg:col-span-1 flex flex-col gap-6">
+                <div className="bg-slate-950/50 border border-white/10 rounded-[28px] p-5 overflow-hidden">
+                  <h2 className="text-lg sm:text-xl font-semibold mb-4">Omgång 1</h2>
+                  <div className="space-y-3 pr-2">
+                    {rounds.round1.map((match, i) => (
+                      <div
+                        key={i}
+                        className="p-4 rounded-3xl bg-white/5 border border-white/10 transition hover:bg-white/10"
+                      >
+                        <div className="flex justify-between items-center gap-3">
+                          <p className="font-medium text-white">{shortenName(match.player1)} vs {shortenName(match.player2)}</p>
+                          {match.score1 !== null && match.score2 !== null ? (
+                            <span className="text-sm font-semibold text-yellow-300">
+                              {match.score1} - {match.score2}
+                            </span>
+                          ) : (
+                            <span className="text-sm font-semibold text-red-400">
+                              Ej spelad
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                </div>
+                <div className="bg-slate-950/50 border border-white/10 rounded-[28px] p-5 overflow-hidden">
+                  <h2 className="text-lg sm:text-xl font-semibold mb-4">Omgång 2</h2>
+                  <div className="space-y-3 pr-2">
+                    {rounds.round2.map((match, i) => (
+                      <div
+                        key={i}
+                        className="p-4 rounded-3xl bg-white/5 border border-white/10 transition hover:bg-white/10"
+                      >
+                        <div className="flex justify-between items-center gap-3">
+                          <p className="font-medium text-white">{shortenName(match.player1)} vs {shortenName(match.player2)}</p>
+                          {match.score1 !== null && match.score2 !== null ? (
+                            <span className="text-sm font-semibold text-yellow-300">
+                              {match.score1} - {match.score2}
+                            </span>
+                          ) : (
+                            <span className="text-sm font-semibold text-red-400">
+                              Ej spelad
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              <div className="lg:col-span-2 bg-slate-950/50 border border-white/10 rounded-[28px] p-5 overflow-hidden">
-                <h2 className="text-lg sm:text-xl font-semibold mb-4">Omgång 2</h2>
-                <div className="space-y-3 pr-2">
-                  {rounds.round2.map((match, i) => (
-                    <div
-                      key={i}
-                      className="p-4 rounded-3xl bg-white/5 border border-white/10 transition hover:bg-white/10"
-                    >
-                      <div className="flex justify-between items-center gap-3">
-                        <p className="font-medium text-white">{match.player1} vs {match.player2}</p>
-                        {match.score1 !== null && match.score2 !== null ? (
-                          <span className="text-sm font-semibold text-yellow-300">
-                            {match.score1} - {match.score2}
-                          </span>
-                        ) : (
-                          <span className="text-sm font-semibold text-red-400">
-                            Ej spelad
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="lg:col-span-3 bg-slate-950/55 border border-white/10 rounded-[28px] p-5 overflow-x-auto">
+              <div className="lg:col-span-2 bg-slate-950/55 border border-white/10 rounded-[28px] p-5 overflow-x-auto">
                 <ScoreTable
                   players={players}
                   rounds={rounds}
