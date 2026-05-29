@@ -1,5 +1,12 @@
 import React from "react";
 
+function shortenName(fullName) {
+  if (!fullName) return "";
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
+}
+
 export default function MatchRound({ title, matches }) {
   return (
     <div className="bg-white bg-opacity-90 text-black p-4 rounded shadow-md max-w-full overflow-x-auto">
@@ -13,7 +20,7 @@ export default function MatchRound({ title, matches }) {
               key={index}
               className="px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-center sm:text-left"
             >
-              {match.player1} vs {match.player2}
+              {shortenName(match.player1)} vs {shortenName(match.player2)}
             </li>
           ))}
         </ul>

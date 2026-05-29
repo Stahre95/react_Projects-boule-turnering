@@ -4,6 +4,7 @@ export default function ScoreTable({ players, rounds, onStandingsUpdate, playoff
   const allMatches = [...rounds.round1, ...rounds.round2];
 
   const playerStats = players.map((player) => {
+    const playerName = typeof player === "object" && player !== null ? player.player ?? "" : player;
     let points = 0;
     let goalDifference = 0;
     let goalsFor = 0;
@@ -11,9 +12,9 @@ export default function ScoreTable({ players, rounds, onStandingsUpdate, playoff
 
     allMatches.forEach((match) => {
       if (match.score1 !== null && match.score2 !== null) {
-        if (match.player1 === player || match.player2 === player) {
-          const scorePlayer1 = match.player1 === player ? match.score1 : match.score2;
-          const scorePlayer2 = match.player1 === player ? match.score2 : match.score1;
+        if (match.player1 === playerName || match.player2 === playerName) {
+          const scorePlayer1 = match.player1 === playerName ? match.score1 : match.score2;
+          const scorePlayer2 = match.player1 === playerName ? match.score2 : match.score1;
           
           goalsFor += scorePlayer1;
           goalsAgainst += scorePlayer2;
@@ -22,8 +23,8 @@ export default function ScoreTable({ players, rounds, onStandingsUpdate, playoff
           if (scorePlayer1 === scorePlayer2) {
             points += 0.5;
           } else if (
-            (match.player1 === player && match.score1 > match.score2) ||
-            (match.player2 === player && match.score2 > match.score1)
+            (match.player1 === playerName && match.score1 > match.score2) ||
+            (match.player2 === playerName && match.score2 > match.score1)
           ) {
             points += 1;
           }
@@ -31,7 +32,7 @@ export default function ScoreTable({ players, rounds, onStandingsUpdate, playoff
       }
     });
 
-    return { player, points, goalDifference, goalsFor, goalsAgainst };
+    return { player: playerName, points, goalDifference, goalsFor, goalsAgainst };
   });
 
   const sortedStats = [...playerStats].sort((a, b) => {
@@ -51,7 +52,14 @@ export default function ScoreTable({ players, rounds, onStandingsUpdate, playoff
     }
   }, [rounds, onStandingsUpdate]);
 
-  const lineAfter = playoffType === "final" ? 2 : playoffType === "semifinal" ? 4 : 8;
+  const cutoffMap = {
+    final: 2,
+    semifinal: 4,
+    kvartsfinal: 8,
+    "åttondelsfinal": 16,
+    sextondelsfinal: 32,
+  };
+  const lineAfter = cutoffMap[playoffType] || 0;
 
   return (
     <div className="w-full overflow-x-auto">
@@ -59,7 +67,7 @@ export default function ScoreTable({ players, rounds, onStandingsUpdate, playoff
       {sortedStats.length === 0 ? (
         <p className="text-center text-gray-600">Poängställning kommer visas här</p>
       ) : (
-        <table className="w-full text-center sm:text-left border border-gray-200 rounded-lg shadow-sm min-w-[280px] sm:min-w-[350px]">
+        <table className="w-full text-center sm:text-left border border-gray-200 rounded-lg shadow-sm min-w-full">
           <thead className="bg-gray-100 text-gray-700">
             <tr>
               <th className="border-b px-2 sm:px-3 py-2">#</th>

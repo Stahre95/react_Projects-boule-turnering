@@ -7,6 +7,7 @@ export default function LoginRegister() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [isLogin, setIsLogin] = useState(true);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -30,6 +31,12 @@ export default function LoginRegister() {
       return;
     }
 
+    if (!isLogin && !lastName.trim()) {
+      setError('Efternamn är obligatoriskt för registrering');
+      setLoading(false);
+      return;
+    }
+
     if (password.length < 6) {
       setError('Lösenordet måste vara minst 6 tecken');
       setLoading(false);
@@ -40,7 +47,7 @@ export default function LoginRegister() {
       if (isLogin) {
         await login(email, password);
       } else {
-        await register(email, password, firstName.trim());
+        await register(email, password, firstName.trim(), lastName.trim());
       }
     } catch (err) {
       console.error('Auth error:', err);
@@ -81,20 +88,37 @@ export default function LoginRegister() {
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-4">
               {!isLogin && (
-                <div>
-                  <label htmlFor="firstName" className="sr-only">Förnamn</label>
-                  <input
-                    id="firstName"
-                    name="firstName"
-                    type="text"
-                    required={!isLogin}
-                    disabled={loading}
-                    className="appearance-none relative block w-full px-3 py-3 border border-white/20 placeholder-white/70 text-white bg-white/10 backdrop-blur-sm rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 sm:text-sm disabled:bg-gray-100/20"
-                    placeholder="Förnamn"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                  />
-                </div>
+                <>
+                  <div>
+                    <label htmlFor="firstName" className="sr-only">Förnamn</label>
+                    <input
+                      id="firstName"
+                      name="firstName"
+                      type="text"
+                      required={!isLogin}
+                      disabled={loading}
+                      className="appearance-none relative block w-full px-3 py-3 border border-white/20 placeholder-white/70 text-white bg-white/10 backdrop-blur-sm rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 sm:text-sm disabled:bg-gray-100/20"
+                      placeholder="Förnamn"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="lastName" className="sr-only">Efternamn</label>
+                    <input
+                      id="lastName"
+                      name="lastName"
+                      type="text"
+                      required={!isLogin}
+                      disabled={loading}
+                      className="appearance-none relative block w-full px-3 py-3 border border-white/20 placeholder-white/70 text-white bg-white/10 backdrop-blur-sm rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 sm:text-sm disabled:bg-gray-100/20"
+                      placeholder="Efternamn"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                    />
+                  </div>
+                </>
               )}
               <div>
                 <label htmlFor="email" className="sr-only">E-postadress</label>
