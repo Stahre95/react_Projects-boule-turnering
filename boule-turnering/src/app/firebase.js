@@ -36,16 +36,6 @@ console.log('Initialized auth:', auth);
 export const db = getFirestore(app);
 console.log('Initialized db:', db);
 
-// Enable offline persistence for Firestore
-import { enableIndexedDbPersistence } from 'firebase/firestore';
+// Offline persistence is disabled by default to avoid stale cached Firestore state.
 
-try {
-  enableIndexedDbPersistence(db);
-  console.log('Firestore offline persistence enabled');
-} catch (err) {
-  if (err.code == 'failed-precondition') {
-    console.warn('Firestore offline persistence failed: Multiple tabs open');
-  } else if (err.code == 'unavailable') {
-    console.warn('Firestore offline persistence failed: Browser not supported');
-  }
-}
+console.log('Firestore offline persistence is disabled.');

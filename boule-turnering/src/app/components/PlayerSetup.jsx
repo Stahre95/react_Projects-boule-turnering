@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { db } from "../firebase";
-import { collection, getDocs, getDocsFromCache, doc, getDoc } from "firebase/firestore";
+import { collection, getDocsFromCache, getDocsFromServer, doc, getDoc } from "firebase/firestore";
 
 export default function PlayerSetup({ onStart }) {
   const { user } = useAuth();
@@ -79,29 +79,36 @@ export default function PlayerSetup({ onStart }) {
     let blocked = false;
     const fetchUsers = async () => {
       try {
-        // Try cache first to avoid opening network streams (adblockers may block them)
         let snap = null;
-        try {
-          snap = await getDocsFromCache(collection(db, "users"));
-        } catch (cacheErr) {
-          // cache miss or not available
-          snap = null;
-        }
 
-        if (!snap || snap.empty) {
-          // Fallback to server once; if the request is blocked we stop retrying
+        console.log('Starting Firestore registered users fetch.');
+        // Try server first so we get the latest registered users.
+        // If the server fetch fails, fall back to cache.
+        try {
+          snap = await getDocsFromServer(collection(db, "users"));
+          console.log('Server fetch completed:', { docs: snap.docs.length, metadata: snap.metadata });
+          if (snap?.metadata?.fromCache) {
+            console.warn('Firestore returned users from cache even though server was requested.', snap.metadata);
+          } else {
+            console.log(`Fetched ${snap.docs.length} users from Firestore server.`);
+          }
+        } catch (srvErr) {
+          const msg = (srvErr && srvErr.message) || '';
+          if (msg.includes('ERR_BLOCKED_BY_CLIENT') || msg.includes('blocked')) {
+            blocked = true;
+            console.warn('Firestore network requests appear to be blocked by a browser extension or network policy. Falling back to cache.');
+          } else {
+            console.warn('Failed to fetch registered users from server, falling back to cache:', srvErr);
+          }
+
           try {
-            snap = await getDocs(collection(db, "users"));
-          } catch (srvErr) {
-            // Detect common blocked-network symptom
-            const msg = (srvErr && srvErr.message) || '';
-            if (msg.includes('ERR_BLOCKED_BY_CLIENT') || msg.includes('blocked')) {
-              blocked = true;
-              console.warn('Firestore network requests appear to be blocked by a browser extension or network policy. Registered users will not be loaded.');
-              // still ensure current user is present
-            } else {
-              console.warn('Failed to fetch registered users from server:', srvErr);
+            snap = await getDocsFromCache(collection(db, "users"));
+            console.log('Cache fetch completed after server failure:', { docs: snap.docs.length, metadata: snap.metadata });
+            if (snap) {
+              console.warn(`Using cached users (${snap.docs.length}) because server fetch failed.`);
             }
+          } catch (cacheErr) {
+            console.warn('Failed to load users from cache after server fetch failed:', cacheErr);
             snap = null;
           }
         }
@@ -141,12 +148,9 @@ export default function PlayerSetup({ onStart }) {
 
         if (mounted) {
           setRegisteredUsers(merged);
-          try {
-            if (snap && snap.docs) {
-              console.log('Firestore raw user docs:', snap.docs.map(d => ({ id: d.id, data: d.data() })));
-            }
-          } catch (logErr) {
-            console.log('Fetched users (mapped):', merged);
+          console.log('Loaded registered users:', merged);
+          if (snap && snap.docs) {
+            console.log('Firestore raw user docs:', snap.docs.map(d => ({ id: d.id, data: d.data() })));
           }
         }
         if (mounted && blocked) setFetchBlocked(true);
