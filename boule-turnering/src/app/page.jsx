@@ -1,17 +1,21 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from 'next/navigation';
 import { useAuth } from "./context/AuthContext";
 import { db } from "./firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, doc, getDoc, serverTimestamp } from "firebase/firestore";
 import HeroSection from "./components/HeroSection";  // Justera sökväg
 import TournamentOverview from "./components/TournamentOverview"; // Vi skapar denna komponent snart
 import LoginRegister from "./components/LoginRegister";
 
+export const dynamic = 'force-dynamic';
+
 export default function Home() {
   const { user, loading, error } = useAuth();
   const [players, setPlayers] = useState(null);
-  const [playoffType, setPlayoffType] = useState("kvartsfinal")
+  const [playoffType, setPlayoffType] = useState("kvartsfinal");
+  const [resumeTournamentId, setResumeTournamentId] = useState(null);
 
   const handleStartTournament = (playerNames, playoff) => {
     setPlayers(playerNames);
@@ -42,8 +46,28 @@ export default function Home() {
     })();
   };
 
+  const router = useRouter();
+
+  const handleTournamentDeleted = () => {
+    try { localStorage.removeItem('activeTournament'); localStorage.removeItem('activeTournamentId'); } catch (e) {}
+    setPlayers(null);
+    try { router.push('/'); } catch (e) {}
+  };
+
+  // On mount, read query param resume from URL
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const resumeId = params.get('resume');
+      if (resumeId) {
+        setResumeTournamentId(resumeId);
+      }
+    }
+  }, []);
+
   // On mount, restore active tournament from localStorage if present
   useEffect(() => {
+    if (players) return;
     try {
       const raw = localStorage.getItem('activeTournament');
       if (raw) {
@@ -56,7 +80,38 @@ export default function Home() {
     } catch (err) {
       console.warn('Failed to read activeTournament from localStorage', err);
     }
-  }, []);
+  }, [players]);
+
+  useEffect(() => {
+    if (!resumeTournamentId || players) return;
+
+    const fetchResumeTournament = async () => {
+      try {
+        const tournamentRef = doc(db, 'tournaments', resumeTournamentId);
+        const snapshot = await getDoc(tournamentRef);
+        if (!snapshot.exists()) return;
+
+        const data = snapshot.data();
+        if (!data || data.status !== 'active') return;
+
+        const restoredPlayers = Array.isArray(data.players) ? data.players : [];
+        if (restoredPlayers.length === 0) return;
+
+        setPlayers(restoredPlayers);
+        setPlayoffType(data.playoffType || 'kvartsfinal');
+        localStorage.setItem('activeTournament', JSON.stringify({
+          players: restoredPlayers,
+          playoffType: data.playoffType || 'kvartsfinal',
+          createdAt: data.createdAt,
+        }));
+        localStorage.setItem('activeTournamentId', resumeTournamentId);
+      } catch (err) {
+        console.warn('Failed to resume active tournament from query param', err);
+      }
+    };
+
+    fetchResumeTournament();
+  }, [resumeTournamentId, players]);
 
   if (loading) {
     return (
@@ -79,7 +134,7 @@ export default function Home() {
       {!players ? (
         <HeroSection onStart={handleStartTournament} />
       ) : (
-        <TournamentOverview players={players} playoffType={playoffType}/>
+        <TournamentOverview players={players} playoffType={playoffType} onDeleteComplete={handleTournamentDeleted} />
       )}
     </>
   );

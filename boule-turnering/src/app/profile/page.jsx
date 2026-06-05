@@ -280,7 +280,7 @@ export default function ProfilePage() {
               <div className="space-y-4">
                 {activeTournament && (
                   <Link
-                    href={`/tournament/${activeTournament.id}`}
+                    href={`/?resume=${activeTournament.id}`}
                     className="block w-full text-left rounded-3xl border border-white/10 bg-slate-950/40 p-4 transition hover:bg-slate-950/60"
                   >
                     <div className="flex items-center justify-between gap-4">
@@ -290,7 +290,7 @@ export default function ProfilePage() {
                         <p className="text-sm text-gray-300">{activeTournament.playoffType}</p>
                         <p className="text-sm text-gray-400">Skapad {formatDate(activeTournament.createdAt)}</p>
                       </div>
-                      <div className="text-right text-sm font-semibold text-yellow-300">Visa detaljer →</div>
+                      <div className="text-right text-sm font-semibold text-yellow-300">Fortsätt turnering →</div>
                     </div>
                   </Link>
                 )}

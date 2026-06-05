@@ -16,7 +16,7 @@ function shortenName(fullName) {
   return `${parts[0]} ${parts[parts.length - 1][0]}.`;
 }
 
-export default function TournamentOverview({ players, playoffType }) {
+export default function TournamentOverview({ players, playoffType, onDeleteComplete }) {
   const router = useRouter();
   const { user } = useAuth();
   const [rounds, setRounds] = useState({ round1: [], round2: [] });
@@ -26,6 +26,7 @@ export default function TournamentOverview({ players, playoffType }) {
   const [playoffSize, setPlayoffSize] = useState(0);
   const [standings, setStandings] = useState([]);
   const [deletingTournament, setDeletingTournament] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Generera matcher när players ändras
   useEffect(() => {
@@ -137,8 +138,6 @@ export default function TournamentOverview({ players, playoffType }) {
   };
 
   const handleDeleteTournament = async () => {
-    const confirmed = window.confirm('Är du säker på att du vill ta bort den här turneringen? Denna åtgärd går inte att ångra.');
-    if (!confirmed) return;
     setDeletingTournament(true);
 
     try {
@@ -148,13 +147,35 @@ export default function TournamentOverview({ players, playoffType }) {
       }
       localStorage.removeItem('activeTournament');
       localStorage.removeItem('activeTournamentId');
-      router.push('/');
+      setShowDeleteConfirm(false);
+
+      // Prefer app-level handler to avoid full reloads (falls back to navigation)
+      if (typeof onDeleteComplete === 'function') {
+        try {
+          await onDeleteComplete();
+        } catch (e) {
+          // ignore handler errors and fallback to navigation
+          try { await router.replace('/'); } catch (err) {}
+        }
+      } else {
+        try { await router.replace('/'); } catch (e) {}
+        if (typeof window !== 'undefined') window.location.href = '/';
+      }
     } catch (err) {
       console.warn('Failed to delete active tournament', err);
+      setShowDeleteConfirm(false);
       window.alert('Kunde inte ta bort turneringen. Försök igen senare.');
     } finally {
       setDeletingTournament(false);
     }
+  };
+
+  const confirmDelete = () => {
+    handleDeleteTournament();
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteConfirm(false);
   };
 
   return (
@@ -272,7 +293,7 @@ export default function TournamentOverview({ players, playoffType }) {
 
               <button
                 type="button"
-                onClick={handleDeleteTournament}
+                onClick={() => setShowDeleteConfirm(true)}
                 disabled={deletingTournament}
                 className="w-full sm:w-auto bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-8 rounded-full shadow-xl transition disabled:cursor-not-allowed disabled:opacity-70"
               >
@@ -303,6 +324,33 @@ export default function TournamentOverview({ players, playoffType }) {
             )}
           </div>
         </div>
+
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
+            <div className="rounded-[32px] bg-white/10 backdrop-blur-xl border border-white/10 shadow-2xl p-6 sm:p-8 max-w-md w-full">
+              <h2 className="text-2xl font-semibold text-white mb-3">Bekräfta borttagning</h2>
+              <p className="text-gray-300 mb-6">
+                Är du säker på att du vill ta bort den här turneringen? Denna åtgärd går inte att ångra.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-end">
+                <button
+                  onClick={cancelDelete}
+                  disabled={deletingTournament}
+                  className="px-6 py-3 rounded-full border border-white/20 bg-white/5 text-white font-semibold transition hover:bg-white/10 disabled:opacity-50"
+                >
+                  Avbryt
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  disabled={deletingTournament}
+                  className="px-6 py-3 rounded-full bg-red-600 text-white font-semibold transition hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {deletingTournament ? "Tar bort..." : "Ta bort turnering"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );

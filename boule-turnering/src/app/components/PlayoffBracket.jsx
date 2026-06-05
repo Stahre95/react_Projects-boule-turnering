@@ -27,12 +27,34 @@ export default function PlayoffBracket({ playoffData, onSaveResults, playoffType
       ];
     }
 
-    return Array.from({ length: count }, (_, i) => ({
-      id: `${prefix}${i + 1}`,
-      player1: `Vinnare ${prefix} ${i * 2 + 1}`,
-      player2: `Vinnare ${prefix} ${i * 2 + 2}`,
-      score1: null,
-      score2: null,
+    return Array.from({ length: count }, (_, i) => {
+      const firstSeed = i + 1;
+      const secondSeed = count * 2 - i;
+
+      return {
+        id: `${prefix}${i + 1}`,
+        player1: `Vinnare ${prefix} ${firstSeed}`,
+        player2: `Vinnare ${prefix} ${secondSeed}`,
+        score1: null,
+        score2: null,
+      };
+    });
+  };
+
+  const getBracketPairings = (total) => {
+    const pairs = [];
+    for (let i = 0; i < total / 2; i += 1) {
+      pairs.push([i, total - 1 - i]);
+    }
+    return pairs;
+  };
+
+  const applyBracketWinners = (prev, winners, total) => {
+    const pairings = getBracketPairings(total);
+    return prev.map((match, i) => ({
+      ...match,
+      player1: winners[pairings[i][0]] || match.player1,
+      player2: winners[pairings[i][1]] || match.player2,
     }));
   };
 
@@ -62,18 +84,28 @@ export default function PlayoffBracket({ playoffData, onSaveResults, playoffType
     if (!playerNames || playerNames.length === 0) return;
 
     if (!playoffData) {
+      const seedMatches = (seedCount) => {
+        const matches = [];
+        for (let i = 0; i < seedCount / 2; i += 1) {
+          matches.push({
+            id: `${seedCount}-${i + 1}`,
+            player1: playerNames[i],
+            player2: playerNames[seedCount - 1 - i],
+            score1: null,
+            score2: null,
+          });
+        }
+        return matches;
+      };
+
       if (playoffType === "sextondelsfinal") {
         const top32 = playerNames.slice(0, 32);
         if (top32.length < 32) return;
-        const matchups = [];
-        for (let i = 0; i < 16; i++) {
-          matchups.push([top32[i], top32[31 - i]]);
-        }
         setRoundOf32(
-          matchups.map((pair, i) => ({
-            id: `r32-${i + 1}`,
-            player1: pair[0],
-            player2: pair[1],
+          top32.slice(0, 16).map((_, index) => ({
+            id: `r32-${index + 1}`,
+            player1: top32[index],
+            player2: top32[31 - index],
             score1: null,
             score2: null,
           }))
@@ -85,21 +117,11 @@ export default function PlayoffBracket({ playoffData, onSaveResults, playoffType
       } else if (playoffType === "åttondelsfinal") {
         const top16 = playerNames.slice(0, 16);
         if (top16.length < 16) return;
-        const matchups = [
-          [top16[0], top16[15]],
-          [top16[1], top16[14]],
-          [top16[2], top16[13]],
-          [top16[3], top16[12]],
-          [top16[4], top16[11]],
-          [top16[5], top16[10]],
-          [top16[6], top16[9]],
-          [top16[7], top16[8]],
-        ];
         setRoundOf16(
-          matchups.map((pair, i) => ({
-            id: `r16-${i + 1}`,
-            player1: pair[0],
-            player2: pair[1],
+          top16.slice(0, 8).map((_, index) => ({
+            id: `r16-${index + 1}`,
+            player1: top16[index],
+            player2: top16[15 - index],
             score1: null,
             score2: null,
           }))
@@ -110,17 +132,11 @@ export default function PlayoffBracket({ playoffData, onSaveResults, playoffType
       } else if (playoffType === "kvartsfinal") {
         const top8 = playerNames.slice(0, 8);
         if (top8.length < 8) return;
-        const matchups = [
-          [top8[0], top8[7]],
-          [top8[1], top8[6]],
-          [top8[2], top8[5]],
-          [top8[3], top8[4]],
-        ];
         setQuarterfinals(
-          matchups.map((pair, i) => ({
-            id: `qf${i + 1}`,
-            player1: pair[0],
-            player2: pair[1],
+          top8.slice(0, 4).map((_, index) => ({
+            id: `qf${index + 1}`,
+            player1: top8[index],
+            player2: top8[7 - index],
             score1: null,
             score2: null,
           }))
@@ -130,19 +146,22 @@ export default function PlayoffBracket({ playoffData, onSaveResults, playoffType
       } else if (playoffType === "semifinal") {
         const top4 = playerNames.slice(0, 4);
         if (top4.length < 4) return;
-        const matchups = [
-          [top4[0], top4[3]],
-          [top4[1], top4[2]],
-        ];
-        setSemifinals(
-          matchups.map((pair, i) => ({
-            id: `sf${i + 1}`,
-            player1: pair[0],
-            player2: pair[1],
+        setSemifinals([
+          {
+            id: "sf1",
+            player1: top4[0],
+            player2: top4[3],
             score1: null,
             score2: null,
-          }))
-        );
+          },
+          {
+            id: "sf2",
+            player1: top4[1],
+            player2: top4[2],
+            score1: null,
+            score2: null,
+          },
+        ]);
         setFinals(createEmptyMatches("final", 1));
       } else if (playoffType === "final") {
         setFinals(createEmptyMatches("final", 1));
@@ -161,13 +180,7 @@ export default function PlayoffBracket({ playoffData, onSaveResults, playoffType
     if (playoffType !== "sextondelsfinal") return;
     const winners = roundOf32.map(getWinner).filter(Boolean);
     if (winners.length === 0) return;
-    setRoundOf16((prev) =>
-      prev.map((match, i) => ({
-        ...match,
-        player1: winners[i * 2] || match.player1,
-        player2: winners[i * 2 + 1] || match.player2,
-      }))
-    );
+    setRoundOf16((prev) => applyBracketWinners(prev, winners, 16));
   }, [roundOf32, playoffType]);
 
   // Uppdatera kvartsfinal automatiskt efter åttondelsfinal
@@ -175,13 +188,7 @@ export default function PlayoffBracket({ playoffData, onSaveResults, playoffType
     if (!["sextondelsfinal", "åttondelsfinal"].includes(playoffType)) return;
     const winners = roundOf16.map(getWinner).filter(Boolean);
     if (winners.length === 0) return;
-    setQuarterfinals((prev) =>
-      prev.map((match, i) => ({
-        ...match,
-        player1: winners[i * 2] || match.player1,
-        player2: winners[i * 2 + 1] || match.player2,
-      }))
-    );
+    setQuarterfinals((prev) => applyBracketWinners(prev, winners, 8));
   }, [roundOf16, playoffType]);
 
   // Uppdatera semifinaler automatiskt efter kvartsfinal
@@ -189,26 +196,14 @@ export default function PlayoffBracket({ playoffData, onSaveResults, playoffType
     if (!["sextondelsfinal", "åttondelsfinal", "kvartsfinal"].includes(playoffType)) return;
     const winners = quarterfinals.map(getWinner).filter(Boolean);
     if (winners.length === 0) return;
-    setSemifinals((prev) =>
-      prev.map((match, i) => ({
-        ...match,
-        player1: winners[i * 2] || match.player1,
-        player2: winners[i * 2 + 1] || match.player2,
-      }))
-    );
+    setSemifinals((prev) => applyBracketWinners(prev, winners, 4));
   }, [quarterfinals, playoffType]);
 
   // Uppdatera final automatiskt efter semifinal
   useEffect(() => {
     const winners = semifinals.map(getWinner).filter(Boolean);
     if (winners.length === 0) return;
-    setFinals((prev) =>
-      prev.map((match) => ({
-        ...match,
-        player1: winners[0] || match.player1,
-        player2: winners[1] || match.player2,
-      }))
-    );
+    setFinals((prev) => applyBracketWinners(prev, winners, 2));
   }, [semifinals]);
 
   const handleSave = () => {
