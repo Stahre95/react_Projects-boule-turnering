@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from 'next/navigation';
 import { useAuth } from "./context/AuthContext";
 import { db } from "./firebase";
 import { collection, addDoc, doc, getDoc, serverTimestamp } from "firebase/firestore";
@@ -43,6 +44,14 @@ export default function Home() {
         console.warn('Failed to save active tournament to Firestore', err);
       }
     })();
+  };
+
+  const router = useRouter();
+
+  const handleTournamentDeleted = () => {
+    try { localStorage.removeItem('activeTournament'); localStorage.removeItem('activeTournamentId'); } catch (e) {}
+    setPlayers(null);
+    try { router.push('/'); } catch (e) {}
   };
 
   // On mount, read query param resume from URL
@@ -125,7 +134,7 @@ export default function Home() {
       {!players ? (
         <HeroSection onStart={handleStartTournament} />
       ) : (
-        <TournamentOverview players={players} playoffType={playoffType}/>
+        <TournamentOverview players={players} playoffType={playoffType} onDeleteComplete={handleTournamentDeleted} />
       )}
     </>
   );
