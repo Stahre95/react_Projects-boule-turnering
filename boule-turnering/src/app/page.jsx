@@ -8,6 +8,8 @@ import { collection, addDoc, doc, getDoc, serverTimestamp } from "firebase/fires
 import HeroSection from "./components/HeroSection";  // Justera sökväg
 import TournamentOverview from "./components/TournamentOverview"; // Vi skapar denna komponent snart
 import LoginRegister from "./components/LoginRegister";
+import { generateMatchRounds } from "./components/generateMatchRounds";
+import { createEmptyPlayoffData, createInitialLeagueTable } from "./components/generatePlayoffData";
 
 export const dynamic = 'force-dynamic';
 
@@ -15,13 +17,33 @@ export default function Home() {
   const { user, loading, error } = useAuth();
   const [players, setPlayers] = useState(null);
   const [playoffType, setPlayoffType] = useState("kvartsfinal");
+  const [initialRounds, setInitialRounds] = useState(null);
   const [resumeTournamentId, setResumeTournamentId] = useState(null);
 
   const handleStartTournament = (playerNames, playoff) => {
+    const groupRounds = generateMatchRounds(playerNames);
+    const leagueTable = createInitialLeagueTable(playerNames);
+    const playoffData = createEmptyPlayoffData(playoff);
+    console.log('Creating tournament with data:', {
+      players: playerNames,
+      playoffType: playoff,
+      leagueTable,
+      groupRounds,
+      playoffData,
+    });
+
     setPlayers(playerNames);
     setPlayoffType(playoff);
+    setInitialRounds(groupRounds);
     // Persist active tournament locally for offline/refresh resilience
-    const active = { players: playerNames, playoffType: playoff, createdAt: new Date().toISOString() };
+    const active = {
+      players: playerNames,
+      playoffType: playoff,
+      leagueTable,
+      groupRounds,
+      playoffData,
+      createdAt: new Date().toISOString(),
+    };
     try {
       localStorage.setItem('activeTournament', JSON.stringify(active));
     } catch (err) {
@@ -35,6 +57,9 @@ export default function Home() {
           owner: user?.uid || null,
           players: playerNames,
           playoffType: playoff,
+          leagueTable,
+          groupRounds,
+          playoffData,
           status: 'active',
           createdAt: serverTimestamp(),
         });
@@ -75,6 +100,7 @@ export default function Home() {
         if (parsed && parsed.players) {
           setPlayers(parsed.players);
           setPlayoffType(parsed.playoffType || 'kvartsfinal');
+          setInitialRounds(parsed.groupRounds || null);
         }
       }
     } catch (err) {
@@ -99,9 +125,13 @@ export default function Home() {
 
         setPlayers(restoredPlayers);
         setPlayoffType(data.playoffType || 'kvartsfinal');
+        setInitialRounds(data.groupRounds || null);
         localStorage.setItem('activeTournament', JSON.stringify({
           players: restoredPlayers,
           playoffType: data.playoffType || 'kvartsfinal',
+          leagueTable: data.leagueTable || null,
+          groupRounds: data.groupRounds || null,
+          playoffData: data.playoffData || null,
           createdAt: data.createdAt,
         }));
         localStorage.setItem('activeTournamentId', resumeTournamentId);
@@ -134,7 +164,12 @@ export default function Home() {
       {!players ? (
         <HeroSection onStart={handleStartTournament} />
       ) : (
-        <TournamentOverview players={players} playoffType={playoffType} onDeleteComplete={handleTournamentDeleted} />
+        <TournamentOverview
+          players={players}
+          playoffType={playoffType}
+          initialRounds={initialRounds}
+          onDeleteComplete={handleTournamentDeleted}
+        />
       )}
     </>
   );
