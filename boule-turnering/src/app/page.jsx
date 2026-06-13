@@ -90,22 +90,53 @@ export default function Home() {
     }
   }, []);
 
-  // On mount, restore active tournament from localStorage if present
+  // On mount, restore active tournament from Firestore first, then fall back to localStorage
   useEffect(() => {
     if (players) return;
-    try {
-      const raw = localStorage.getItem('activeTournament');
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed && parsed.players) {
-          setPlayers(parsed.players);
-          setPlayoffType(parsed.playoffType || 'kvartsfinal');
-          setInitialRounds(parsed.groupRounds || null);
+
+    const hydrateActiveTournament = async () => {
+      try {
+        const activeId = localStorage.getItem('activeTournamentId');
+        if (activeId) {
+          const tournamentRef = doc(db, 'tournaments', activeId);
+          const snapshot = await getDoc(tournamentRef);
+
+          if (snapshot.exists()) {
+            const data = snapshot.data();
+            const restoredPlayers = Array.isArray(data.players) ? data.players : [];
+            if (restoredPlayers.length > 0) {
+              setPlayers(restoredPlayers);
+              setPlayoffType(data.playoffType || 'kvartsfinal');
+              setInitialRounds(data.groupRounds || data.rounds || null);
+
+              localStorage.setItem('activeTournament', JSON.stringify({
+                players: restoredPlayers,
+                playoffType: data.playoffType || 'kvartsfinal',
+                leagueTable: data.leagueTable || null,
+                groupRounds: data.groupRounds || data.rounds || null,
+                playoffData: data.playoffData || null,
+                createdAt: data.createdAt,
+              }));
+              return;
+            }
+          }
         }
+
+        const raw = localStorage.getItem('activeTournament');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.players) {
+            setPlayers(parsed.players);
+            setPlayoffType(parsed.playoffType || 'kvartsfinal');
+            setInitialRounds(parsed.groupRounds || parsed.rounds || null);
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to restore active tournament', err);
       }
-    } catch (err) {
-      console.warn('Failed to read activeTournament from localStorage', err);
-    }
+    };
+
+    hydrateActiveTournament();
   }, [players]);
 
   useEffect(() => {
@@ -125,12 +156,12 @@ export default function Home() {
 
         setPlayers(restoredPlayers);
         setPlayoffType(data.playoffType || 'kvartsfinal');
-        setInitialRounds(data.groupRounds || null);
+        setInitialRounds(data.groupRounds || data.rounds || null);
         localStorage.setItem('activeTournament', JSON.stringify({
           players: restoredPlayers,
           playoffType: data.playoffType || 'kvartsfinal',
           leagueTable: data.leagueTable || null,
-          groupRounds: data.groupRounds || null,
+          groupRounds: data.groupRounds || data.rounds || null,
           playoffData: data.playoffData || null,
           createdAt: data.createdAt,
         }));
