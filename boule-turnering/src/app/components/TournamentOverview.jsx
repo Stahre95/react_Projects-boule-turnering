@@ -4,6 +4,8 @@ import { useAuth } from "../context/AuthContext";
 import { db } from "../firebase";
 import { doc, deleteDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { generateMatchRounds } from "../components/generateMatchRounds";
+import { createSeededPlayoffData } from "../components/generatePlayoffData";
+import { calculateLeagueTable } from "../components/calculateLeagueTable";
 import MatchResultForm from "./MatchResultForm";
 import ScoreTable from "./ScoreTable";
 import PlayoffBracket from "./PlayoffBracket";
@@ -16,10 +18,10 @@ function shortenName(fullName) {
   return `${parts[0]} ${parts[parts.length - 1][0]}.`;
 }
 
-export default function TournamentOverview({ players, playoffType, onDeleteComplete }) {
+export default function TournamentOverview({ players, playoffType, initialRounds, onDeleteComplete }) {
   const router = useRouter();
   const { user } = useAuth();
-  const [rounds, setRounds] = useState({ round1: [], round2: [] });
+  const [rounds, setRounds] = useState(initialRounds || { round1: [], round2: [] });
   const [showForm, setShowForm] = useState(false);
   const [showPlayoff, setShowPlayoff] = useState(false);
   const [playoffData, setPlayoffData] = useState(null);
@@ -30,12 +32,22 @@ export default function TournamentOverview({ players, playoffType, onDeleteCompl
 
   // Generera matcher när players ändras
   useEffect(() => {
+    if (!players) return;
+
+    if (initialRounds) {
+      setRounds(initialRounds);
+      setShowPlayoff(false);
+      setPlayoffData(null);
+      setPlayoffSize(0);
+      return;
+    }
+
     const generated = generateMatchRounds(players);
     setRounds(generated);
     setShowPlayoff(false);
     setPlayoffData(null);
     setPlayoffSize(0);
-  }, [players]);
+  }, [players, initialRounds]);
 
   // Kontrollera om alla gruppmatcher är spelade
   function allGroupMatchesPlayed(rounds) {
@@ -49,6 +61,7 @@ export default function TournamentOverview({ players, playoffType, onDeleteCompl
   const handleSaveResults = async (updatedRounds) => {
     setRounds(updatedRounds);
     setShowForm(false);
+    const leagueTable = calculateLeagueTable(players, updatedRounds);
 
     try {
       const activeId = localStorage.getItem('activeTournamentId');
@@ -56,6 +69,7 @@ export default function TournamentOverview({ players, playoffType, onDeleteCompl
         const tRef = doc(db, 'tournaments', activeId);
         await updateDoc(tRef, {
           groupRounds: updatedRounds,
+          leagueTable,
           updatedAt: serverTimestamp(),
         });
       }
@@ -65,8 +79,13 @@ export default function TournamentOverview({ players, playoffType, onDeleteCompl
   };
 
   // Beräkna och visa slutspel
-  function handleShowPlayoff() {
+  async function handleShowPlayoff() {
     const allMatches = [...rounds.round1, ...rounds.round2];
+
+    console.log('Group matches before playoff creation:', {
+      round1: rounds.round1,
+      round2: rounds.round2,
+    });
 
     // Beräkna poäng och målskillnad
     const playerStats = players.map((player) => {
@@ -103,11 +122,31 @@ export default function TournamentOverview({ players, playoffType, onDeleteCompl
       return a.player.localeCompare(b.player);
     });
 
+    setStandings(playerStats);
+
     // Bestäm antal spelare i slutspel
     const cutoff = playoffType === "sextondelsfinal" ? 32 : playoffType === "åttondelsfinal" ? 16 : playoffType === "kvartsfinal" ? 8 : playoffType === "semifinal" ? 4 : 2;
 
+    const seededPlayoffData = createSeededPlayoffData(playoffType, playerStats.map((entry) => entry.player));
+    if (seededPlayoffData) {
+      console.log('Seeded playoff bracket created:', seededPlayoffData);
+      setPlayoffData(seededPlayoffData);
+      try {
+        const activeId = localStorage.getItem('activeTournamentId');
+        if (activeId && user) {
+          const tRef = doc(db, 'tournaments', activeId);
+          await updateDoc(tRef, {
+            leagueTable: playerStats,
+            playoffData: seededPlayoffData,
+            updatedAt: serverTimestamp(),
+          });
+        }
+      } catch (err) {
+        console.warn('Failed to persist seeded playoff bracket to Firestore', err);
+      }
+    }
+
     setPlayoffSize(cutoff);
-    setPlayoffData(null);
     setShowPlayoff(true);
   }
 
